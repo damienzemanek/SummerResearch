@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e02ac82b46448554e8528e68d36ddfb0, type: 3}
+  m_Name: Twin1
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyConfig
+  <animHandle>k__BackingField:
+    States:
+    - name: Idle
+      layer: 0
+      animEnum: 0
+      hash: 2081823275
+    - name: Move
+      layer: 0
+      animEnum: 2
+      hash: 1326225478
+    - name: Attack
+      layer: 1
+      animEnum: 1
+      hash: 1080829965
+    - name: Block
+      layer: 0
+      animEnum: 5
+      hash: 1121630246
+    - name: Stun
+      layer: 0
+      animEnum: 4
+      hash: 1397128752
+    - name: Yell
+      layer: 0
+      animEnum: 6
+      hash: 1410440999
+    - name: MoveAttack
+      layer: 0
+      animEnum: 7
+      hash: 1225513192
+    - name: Dying
+      layer: 3
+      animEnum: 3
+      hash: 315139327
+    BlendTreeVariables: []
+  <follow>k__BackingField:
+    <speedScalar>k__BackingField: 1500
+    <nextWaypointDistance>k__BackingField: 1
+    <stoppingDistToTarget>k__BackingField: 0.5
+    <minHorizAngleToFollow>k__BackingField: 70
+  <inAir>k__BackingField:
+    <checkDist>k__BackingField: 0.3
+    <mask>k__BackingField:
+      serializedVersion: 2
+      m_Bits: 8
+    <fallScalar>k__BackingField: 100
+    <forceMode>k__BackingField: 0
+  <clampLateralMove>k__BackingField:
+    <maxVelocityX>k__BackingField: 4
+  <jump>k__BackingField:
+    <canJump>k__BackingField: 0
+    <jumpForceScalar>k__BackingField: 20
+    <jumpDelay>k__BackingField:
+      val: 1
+  <viewRange>k__BackingField:
+    <delayToStopChasing>k__BackingField:
+      val: 2
+  <dyingState>k__BackingField:
+    <dyingStatePeriod>k__BackingField: 6
+    <outOfDeathStateHealAmount>k__BackingField: 2
+  <hitStop>k__BackingField:
+    <scalar>k__BackingField: 0
+    <period>k__BackingField: 0
+  <takeDmg>k__BackingField:
+    <invulnerablePeriod>k__BackingField: 0.2
+    <pushForceX>k__BackingField: 3
+    <pushForceY>k__BackingField: 1
+  <stunned>k__BackingField:
+    <canBeStunned>k__BackingField: 1
+    <stunnedPeriod>k__BackingField:
+      val: 2
+  <finishable>k__BackingField:
+    <finishTime>k__BackingField:
+      val: 3
+  <hyperArmor>k__BackingField:
+    <useHyperArmor>k__BackingField: 1
+  <decisionMaking>k__BackingField:
+    <blockWaitTime>k__BackingField: 3
+    <fwdAttackTime>k__BackingField: 4.2
+  <yell>k__BackingField:
+    <yellAfterPhaseChange>k__BackingField: 1
+  <forwardAttack>k__BackingField:
+    <canForwardAttack>k__BackingField: 1
+    <forwardAttackForce>k__BackingField: 10

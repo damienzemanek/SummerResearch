@@ -1,0 +1,116 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31421fda9db9ff948a0b0a4867bcfd95, type: 3}
+  m_Name: PlayerConfig
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerConfig
+  move:
+    <speedScalar>k__BackingField: 10
+    <forceMode2d>k__BackingField: 0
+    <maxVelocity>k__BackingField: 10
+    <acceleration>k__BackingField: 1.4
+    <deceleration>k__BackingField: 30
+  jump:
+    <jumpCurveRate>k__BackingField: 0.05
+    <maxJumps>k__BackingField: 1
+    forceMode: 1
+    scalar: 5.3
+    coyoteInputWindow:
+      val: 0.2
+    landTime: 1
+  friction:
+    <frictionScalar>k__BackingField: 0.8
+  fall:
+    checkDist: 0.06
+    mask:
+      serializedVersion: 2
+      m_Bits: 8
+    forceMode: 0
+    scalar: 56
+    fallingBufferWindow:
+      val: 0.1
+  facing:
+    <faceDirection>k__BackingField: 0
+    <callbackZones>k__BackingField:
+    - label: 0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 960
+        height: 1080
+    - label: 1
+      rect:
+        serializedVersion: 2
+        x: 960
+        y: 0
+        width: 960
+        height: 1080
+  animHandle:
+    States:
+    - name: Idle
+      layer: 0
+      animEnum: 0
+      hash: 2081823275
+    - name: Move
+      layer: 0
+      animEnum: 1
+      hash: 1326225478
+    - name: JumpInAir
+      layer: 0
+      animEnum: 3
+      hash: 1563475750
+    - name: JumpStart
+      layer: 0
+      animEnum: 2
+      hash: 819769265
+    - name: Land
+      layer: 0
+      animEnum: 4
+      hash: 137525990
+    - name: AttackFront
+      layer: 1
+      animEnum: 5
+      hash: 328758227
+    - name: AttackDown
+      layer: 1
+      animEnum: 7
+      hash: -949119557
+    - name: AttackUp
+      layer: 1
+      animEnum: 6
+      hash: 1443585033
+    - name: Cast
+      layer: 1
+      animEnum: 8
+      hash: -1299573048
+    - name: Casting
+      layer: 1
+      animEnum: 9
+      hash: 514229196
+    - name: CastPull
+      layer: 1
+      animEnum: 10
+      hash: 2054080663
+    BlendTreeVariables: []
+  hook:
+    <hookForce>k__BackingField: 27
+  pogo:
+    <pogoForceStrength>k__BackingField: 23
+  <clampLateralMove>k__BackingField:
+    <maxVelocityX>k__BackingField: 15
+  <hitStop>k__BackingField:
+    <scalar>k__BackingField: 0
+    <period>k__BackingField: 0.2
+  <takeDmg>k__BackingField:
+    <invulnerablePeriod>k__BackingField: 0.8
+    <pushForceX>k__BackingField: 15
+    <pushForceY>k__BackingField: 1

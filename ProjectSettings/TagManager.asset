@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags: []
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - Ground
+  - Water
+  - UI
+  - Player
+  - Enemy
+  - Breakable
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Background Far
+    uniqueID: 3722210055
+    locked: 0
+  - name: Background Close
+    uniqueID: 1107342499
+    locked: 0
+  - name: PlayerSpace
+    uniqueID: 902599907
+    locked: 0
+  - name: Player
+    uniqueID: 1012326635
+    locked: 0
+  - name: PlayerHelmet
+    uniqueID: 3496271665
+    locked: 0
+  - name: Foreground Close
+    uniqueID: 1575054119
+    locked: 0
+  - name: Foreground Far
+    uniqueID: 602505091
+    locked: 0
+  - name: UI
+    uniqueID: 926387321
+    locked: 0
+  - name: ScreenFX
+    uniqueID: 1722610397
+    locked: 0
+  - name: Very Front
+    uniqueID: 4053520261
+    locked: 0
+  m_RenderingLayers:
+  - Default
