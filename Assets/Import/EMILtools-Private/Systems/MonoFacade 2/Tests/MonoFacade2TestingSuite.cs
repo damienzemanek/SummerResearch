@@ -21,7 +21,7 @@ public class MonoFacade2TestingSuite
         var shouldRun = handle.ShouldRun(data);
         Assert.IsTrue(shouldRun);
         
-        // if(shouldRun) handle.Run(ref data);
-        // Assert.AreEqual(2f, data.x);
+        if(shouldRun) handle.Run(ref data);
+        Assert.AreEqual(2f, data.x);
     }
 }

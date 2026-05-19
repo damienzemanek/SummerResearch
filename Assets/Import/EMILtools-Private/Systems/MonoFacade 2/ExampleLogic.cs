@@ -3,6 +3,7 @@ using LogicArchitecture;
 ///notes:
 /// pointer validity depends on where memory lives and how runtime defines safety, not just whether it compiles
 /// static CTOR happens AFTER field init. (weird)
+/// Static fields init top-to-bottom before static constructuer body runs
 
 
 namespace LogicExamples
@@ -16,18 +17,19 @@ namespace LogicExamples
         }
         
         // Pass throughs
-        static bool ShouldRun(ExampleData* data) => data->x > 0;
         static void Run(ExampleData* data) => data->x += 1f;
+        static bool ShouldRun(ExampleData* data) => data->x > 0;
         
-        // local factory
-        public static readonly LogicHandle<ExampleData> Handle = new(Table);
-        
-        // vtable init
+        // vtable init (has to be before Handle)
         static readonly LogicFunctionTable<ExampleData> Table = new LogicFunctionTable<ExampleData>
         {
             ShouldRun = &ShouldRun,
             Run = &Run
         };
+        
+        // local factory (has to be after Table)
+        public static readonly LogicHandle<ExampleData> Handle = new(Table);
+        
     }
     
 }
