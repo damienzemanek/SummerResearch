@@ -12,11 +12,10 @@ namespace LogicArchitecture
     /// <typeparam name="T"></typeparam>
     public readonly unsafe struct LogicOperation<T> where T : unmanaged
     {
-        delegate*<T*, void> run { get; }
-        delegate*<T*, bool> shouldRun { get; }        
+        readonly delegate*<T*, void> run;
+        readonly delegate*<T*, bool> shouldRun;        
         
-        public LogicOperation() => throw new Exception("Do not use the default ctor, call MySystemLogic.Handle");
-        internal LogicOperation(delegate*<T*, void> _run, delegate*<T*, bool> _shouldRun) 
+        public LogicOperation(delegate*<T*, void> _run, delegate*<T*, bool> _shouldRun) 
         {
             run = _run;
             shouldRun = _shouldRun;
@@ -52,6 +51,8 @@ namespace LogicArchitecture
     {
         readonly LogicOperation<T>* operations;
         readonly int count;
+
+        public int Count => count;
 
         public LogicHandle(LogicOperation<T>* _operations, int count)
         {

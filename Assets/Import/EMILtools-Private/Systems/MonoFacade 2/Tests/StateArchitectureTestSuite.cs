@@ -72,16 +72,22 @@ public class StateArchitectureTestSuite
     [Test]
     public unsafe void Test5_StateLogic_StaticDelegates_Assignment()
     {
-        // verify static delegate pointers can be assigned and held
-        // these usually point to static methods in your state implementations
-        StateLogic<ExampleData>.OnUpdate = &DummyUpdate;
-        StateLogic<ExampleData>.OnEnter = &DummyEnter;
+        // verify static logic handles can be assigned
+        // these usually point to LogicHandles that process TickData
+        
+        static void Run(TickLogic<ExampleData>.TickData<ExampleData>* data) { }
+        static bool ShouldRun(TickLogic<ExampleData>.TickData<ExampleData>* data) => true;
+        
+        LogicOperation<TickLogic<ExampleData>.TickData<ExampleData>> op = new(&Run, &ShouldRun);
+        
+        StateLogic<ExampleData>.OnUpdate = &op;
+        StateLogic<ExampleData>.OnEnterState = &op;
 
-        Assert.IsTrue(StateLogic<ExampleData>.OnUpdate != null);
-        Assert.IsTrue(StateLogic<ExampleData>.OnEnter != null);
+        Assert.IsTrue(StateLogic<ExampleData>.OnUpdate.Count > 0);
+        Assert.IsTrue(StateLogic<ExampleData>.OnEnterState.Count > 0);
     }
 
     // dummy implementations for delegate pointer testing
-    private static unsafe void DummyUpdate(float dt, LogicHandle<ExampleData> slot, ExampleData data) { }
-    private static unsafe void DummyEnter(LogicHandle<ExampleData> slot, ExampleData data) { }
+    private static unsafe void DummyUpdate(TickLogic<ExampleData>.TickData<ExampleData>* data) { }
+    private static unsafe void DummyEnter(TickLogic<ExampleData>.TickData<ExampleData>* data) { }
 }

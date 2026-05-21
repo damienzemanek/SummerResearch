@@ -27,7 +27,7 @@ public class StateMachine<TViewCtx> : IFSM
     public Type CurrentStateType => CurrentNode?.State?.GetType();
     
     readonly TViewCtx Context;
-    [ShowInInspector, ReadOnly] List<string> states;
+    [ShowInInspector, ReadOnly] List<string> states; 
     
     public StateMachine(TViewCtx ctx, IState initialState)
     {
