@@ -1,11 +1,9 @@
 using NUnit.Framework;
 using LogicArchitecture;
 using LogicExamples;
-using StateArchitecture;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using static LogicExamples.ExampleLogic;
-using static StateArchitecture.TickLogic<LogicExamples.ExampleLogic.ExampleData>;
 
 public class StateArchitectureTestSuite
 {
@@ -56,7 +54,7 @@ public class StateArchitectureTestSuite
     [Test]
     public unsafe void Test4_TickLogic_Handle_Execution()
     {
-        var tickData = new TickData<ExampleData>(
+        var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(
             _deltaTime: 0.16f,
             operation: ExampleLogic.Operation,
             _coreData: new ExampleData() { x = 10f } );
