@@ -11,7 +11,7 @@ public class MonoFacade2TestingSuite
     public void Test1_InitializeDataAndHandle()
     {
         var data = new ExampleLogic.ExampleData { x = 1f };
-        var handle = ExampleLogic.Handle;
+        var handle = ExampleLogic.Operation;
 
         Assert.AreEqual(1f, data.x);
         Assert.IsNotNull(handle);
@@ -24,7 +24,7 @@ public class MonoFacade2TestingSuite
     public void Test2_ShouldRun()
     {
         var data = new ExampleLogic.ExampleData { x = 1f };
-        var handle = ExampleLogic.Handle;
+        var handle = ExampleLogic.Operation;
 
         var shouldRun = handle.ShouldRun(in data);
         Assert.IsTrue(shouldRun);
@@ -37,7 +37,7 @@ public class MonoFacade2TestingSuite
     public void Test3_Runs()
     {
         var data = new ExampleLogic.ExampleData { x = 1f };
-        var handle = ExampleLogic.Handle;
+        var handle = ExampleLogic.Operation;
 
         handle.Run(ref data);
 
@@ -52,7 +52,7 @@ public class MonoFacade2TestingSuite
     public void Test4_ShouldRunPassesRun()
     {
         var data = new ExampleLogic.ExampleData { x = 1f };
-        var handle = ExampleLogic.Handle;
+        var handle = ExampleLogic.Operation;
 
         var shouldRun = handle.ShouldRun(in data);
         Assert.IsTrue(shouldRun);
@@ -70,7 +70,7 @@ public class MonoFacade2TestingSuite
     public void Test5_ShouldRunFailsRun()
     {
         var data = new ExampleLogic.ExampleData { x = 0f };
-        var handle = ExampleLogic.Handle;
+        var handle = ExampleLogic.Operation;
 
         var shouldRun = handle.ShouldRun(in data);
 

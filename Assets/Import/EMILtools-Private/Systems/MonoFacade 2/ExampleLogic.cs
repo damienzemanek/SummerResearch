@@ -20,7 +20,7 @@ namespace LogicExamples
         static void Run(ExampleData* data) => data->x += 1f;
         static bool ShouldRun(ExampleData* data) => data->x > 0;
         
-        public static readonly LogicHandle<ExampleData> Handle = new(&Run, &ShouldRun);
+        public static readonly LogicOperation<ExampleData> Operation = new(&Run, &ShouldRun);
         
     }
 }

@@ -1,9 +1,11 @@
 using NUnit.Framework;
 using LogicArchitecture;
+using LogicExamples;
 using StateArchitecture;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using static LogicExamples.ExampleLogic;
+using static StateArchitecture.TickLogic<LogicExamples.ExampleLogic.ExampleData>;
 
 public class StateArchitectureTestSuite
 {
@@ -12,13 +14,9 @@ public class StateArchitectureTestSuite
     public void Test1_Initializes()
     {
         var exampleData = new ExampleData() { x = 1f };
-        var logic = Handle;
-        
-        // slot to put logic into
-        var slot = new InstanceInjectableLogicSlot<ExampleData>(logic);
+        var logic = ExampleLogic.Operation;
         
         Assert.IsNotNull(exampleData);
-        Assert.IsNotNull(slot);
         Assert.IsNotNull(logic);
         Assert.AreEqual(1f, exampleData.x);
     }
@@ -27,12 +25,9 @@ public class StateArchitectureTestSuite
     public void Test2_RunThroughSlotCall()
     {
         var exampleData = new ExampleData() { x = 1f };
-        var logic = Handle;
+        var logic = ExampleLogic.Operation;
         
-        // slot to put logic into
-        var slot = new InstanceInjectableLogicSlot<ExampleData>(logic);
-        
-        slot.Run(ref exampleData);
+        logic.Run(ref exampleData);
         
         Assert.AreEqual(2f, exampleData.x);
     }
@@ -44,15 +39,15 @@ public class StateArchitectureTestSuite
     
         // Use stackalloc instead of NativeArray to bypass the unmanaged check
         // LogicHandle is small, so this is safe for a test
-        LogicHandle<ExampleData>* handles = stackalloc LogicHandle<ExampleData>[2];
-        handles[0] = Handle;
-        handles[1] = Handle;
+        LogicOperation<ExampleData>* handles = stackalloc LogicOperation<ExampleData>[2];
+        handles[0] = ExampleLogic.Operation;
+        handles[1] = ExampleLogic.Operation;
 
         // multi-slot init using the stack pointer
-        var multiSlot = new MultiInstanceInjectableLogicSlot<ExampleData>(handles, 2);
+        var logic = new LogicHandle<ExampleData>(handles, 2);
 
         // run multi-slot (should run both handles: 1 + 1 + 1)
-        multiSlot.Run(ref exampleData);
+        logic.Run(ref exampleData);
 
         Assert.AreEqual(3f, exampleData.x);
         // No Dispose needed for stackalloc
@@ -61,14 +56,16 @@ public class StateArchitectureTestSuite
     [Test]
     public unsafe void Test4_TickLogic_Handle_Execution()
     {
-        var exampleData = new ExampleData() { x = 10f };
-        var slot = new InstanceInjectableLogicSlot<ExampleData>(Handle);
-        
-        // package data into the tick packet
-        var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(0.016f, slot, exampleData);
+        var tickData = new TickData<ExampleData>(
+            _deltaTime: 0.16f,
+            operation: ExampleLogic.Operation,
+            _coreData: new ExampleData() { x = 10f } );
 
+        var tickLogic = TickLogic<ExampleData>.Operation;
+        
+        
         // execute the tick logic pipe
-        TickLogic<ExampleData>.Handle.Run(ref tickData);
+        tickLogic.Run(ref tickData);
 
         // check if core data was modified through the pipe
         Assert.AreEqual(11f, tickData.coreData.x);
@@ -87,6 +84,6 @@ public class StateArchitectureTestSuite
     }
 
     // dummy implementations for delegate pointer testing
-    private static unsafe void DummyUpdate(float dt, InstanceInjectableLogicSlot<ExampleData> slot, ExampleData data) { }
-    private static unsafe void DummyEnter(MultiInstanceInjectableLogicSlot<ExampleData> slot, ExampleData data) { }
+    private static unsafe void DummyUpdate(float dt, LogicHandle<ExampleData> slot, ExampleData data) { }
+    private static unsafe void DummyEnter(LogicHandle<ExampleData> slot, ExampleData data) { }
 }
