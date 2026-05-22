@@ -36,16 +36,16 @@ public class StateArchitectureTestSuite
         var exampleData = new ExampleData() { x = 1f };
     
         // Use stackalloc instead of NativeArray to bypass the unmanaged check
-        // LogicHandle is small, so this is safe for a test
+        // Logics is small, so this is safe for a test
         LogicOperation<ExampleData>* handles = stackalloc LogicOperation<ExampleData>[2];
         handles[0] = ExampleLogic.Operation;
         handles[1] = ExampleLogic.Operation;
 
         // multi-slot init using the stack pointer
-        var logic = new LogicHandle<ExampleData>(handles, 2);
+        var logic = new Logics<ExampleData>(handles, 2);
 
         // run multi-slot (should run both handles: 1 + 1 + 1)
-        logic.Run(ref exampleData);
+        logic.TryRun(ref exampleData);
 
         Assert.AreEqual(3f, exampleData.x);
         // No Dispose needed for stackalloc
@@ -63,7 +63,7 @@ public class StateArchitectureTestSuite
         
         
         // execute the tick logic pipe
-        tickLogic.Run(ref tickData);
+        tickLogic.TryRun(ref tickData);
 
         // check if core data was modified through the pipe
         Assert.AreEqual(11f, tickData.coreData.x);

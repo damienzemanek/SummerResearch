@@ -22,19 +22,22 @@ public class DataTestSuite
     [Test]
     public void Test2_Allocates()
     {
-        int capacity = 10;
-        Data<ExampleData> data = new Data<ExampleData>(capacity, Allocator.Persistent);
+        unsafe
+        {
+            int capacity = 10;
+            Data<ExampleData> data = new Data<ExampleData>(capacity, Allocator.Persistent);
         
-        data.Allocate(new ExampleData() { x = 1f }, out int id);
-        Assert.AreEqual(0, id);
+            data.Allocate(new ExampleData() { x = 1f }, out int id);
+            Assert.AreEqual(0, id);
 
-        var allocatedData = data[id];
-        Assert.IsNotNull(allocatedData);
+            var allocatedData = data[id];
+            Assert.IsNotNull(allocatedData);
         
-        var dataInside = data[id];
-        Assert.AreEqual(1f, dataInside.x);
+            var dataInside = data[id];
+            Assert.AreEqual(1f, dataInside.x);
         
-        data.Dispose();
+            data.Dispose();
+        }
     }
     
     [Test]

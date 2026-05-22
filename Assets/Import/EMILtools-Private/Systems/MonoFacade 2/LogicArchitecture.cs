@@ -20,11 +20,6 @@ namespace LogicArchitecture
             run = _run;
             shouldRun = _shouldRun;
         }
-        
-        internal LogicOperation<T>* Ptr 
-        {
-            get { fixed (LogicOperation<T>* ptr = &this) return ptr; }
-        }
 
         /// <summary>
         /// converts the ref T to a pointer, and calls the function
@@ -47,30 +42,30 @@ namespace LogicArchitecture
         }
     }
     
-    public readonly unsafe struct LogicHandle<T> where T : unmanaged
+    public readonly unsafe struct Logics<T> where T : unmanaged
     {
         readonly LogicOperation<T>* operations;
         readonly int count;
 
         public int Count => count;
 
-        public LogicHandle(LogicOperation<T>* _operations, int count)
+        public Logics(LogicOperation<T>* _operations, int count)
         {
             operations = _operations;
             this.count = count;
         }
 
-        public void Run(ref T data)
+        public void TryRun(ref T data)
         {
             for (int i = 0; i < count; i++)
-                operations[i].Run(ref data);
+                if (operations[i].ShouldRun(data))
+                    operations[i].Run(ref data);
         }
+        
 
-
-
-        public static implicit operator LogicHandle<T>(LogicOperation<T>* stableOpPtr)
+        public static implicit operator Logics<T>(LogicOperation<T>* stableOpPtr)
         {
-            return new LogicHandle<T>(stableOpPtr, 1);
+            return new Logics<T>(stableOpPtr, 1);
         }
     }
 }

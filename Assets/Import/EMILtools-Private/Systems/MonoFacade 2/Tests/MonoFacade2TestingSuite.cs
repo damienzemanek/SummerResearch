@@ -31,7 +31,7 @@ public class MonoFacade2TestingSuite
     }
 
     /// <summary>
-    /// This test has to pass because Run() increments data from 1 to 2
+    /// This test has to pass because TryRun() increments data from 1 to 2
     /// </summary>
     [Test]
     public void Test3_Runs()
@@ -46,7 +46,7 @@ public class MonoFacade2TestingSuite
 
     /// <summary>
     /// This test has to pass because ShouldRun() returns true,
-    /// so Run() is executed and increments data from 1 to 2
+    /// so TryRun() is executed and increments data from 1 to 2
     /// </summary>
     [Test]
     public void Test4_ShouldRunPassesRun()
@@ -63,7 +63,7 @@ public class MonoFacade2TestingSuite
     }
 
     /// <summary>
-    /// This test has to pass because Run() should NOT execute,
+    /// This test has to pass because TryRun() should NOT execute,
     /// since ShouldRun() returns false when x == 0
     /// </summary>
     [Test]
