@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "MonoFacade2"
+        "MonoFacade2",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [
         "Editor"

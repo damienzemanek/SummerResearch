@@ -28,7 +28,10 @@ namespace FunctionalStateMachine
             //enter/exit logic using StateLogic
         }
     }
-
+    
+    // =================================================== //
+    //   FIRST GO AN MAKE TEST RUNNER TESTS FOR DATA<T>    //
+    // =================================================== //
 
     public static class FuSMLogic
     {
@@ -44,11 +47,7 @@ namespace FunctionalStateMachine
         
         // Disposal
     }
-
-    public static class TransitionLogic
-    {
-        
-    }
+    
     
     
     /// <summary>

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DataArchitecture
@@ -16,33 +17,45 @@ namespace DataArchitecture
     /// <typeparam name="T"></typeparam>
     public unsafe struct Data<T> where T : unmanaged
     {
+        public int currentSize => nextIndex;
         int nextIndex;
         UnsafeList<T> data;
+        
+        public Data() => throw new System.NotImplementedException("Use Data(int capacity, Allocator allocator) constructor to initialize with a specific capacity and allocator.");
 
         public Data(int capacity, Allocator allocator)
         {
             nextIndex = 0;
             data = new UnsafeList<T>(capacity, allocator);
-            data.Length = capacity;
         }
 
+        /// <summary>
+        /// Allocates a new element and returns its stable index.
+        /// Capacity is reserved memory space, can be uninitialized memory that points to random stuff
+        /// Resize() adjusts Length, which is the number of initialized elements.
+        /// </summary>
+        /// <param name="_data">Data to store.</param>
+        /// <returns>Allocated element index.</returns>
         public int Allocate(ref T _data)
         {
-            if (nextIndex >= data.Length) 
-                data.Resize(data.Length * 2); 
-
+            if (nextIndex >= data.Capacity) data.SetCapacity(math.max(1, data.Capacity * 2));
+            
+            data.Resize(nextIndex + 1);
             data[nextIndex] = _data;
             return nextIndex++;
         }
+        public void Allocate(T _data, out int allocationId) => allocationId = Allocate(ref _data);
+
         
-        public void Allocate(T _data, out int allocationId)
+        
+        public ref T this[int id] => ref GetData(id);
+        ref T GetData(int id)
         {
-            data[nextIndex] = _data;
-            allocationId = nextIndex++;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if ((uint)id >= (uint)currentSize) throw new System.IndexOutOfRangeException($"Index {id} out of bounds. Data length is {data.Length}");
+#endif
+            return ref data.ElementAt(id);
         }
-        
-        public ref T this[int id] => ref data.ElementAt(id);
-        public ref T GetData(int id) => ref data.ElementAt(id);
 
         public void Dispose()
         {
