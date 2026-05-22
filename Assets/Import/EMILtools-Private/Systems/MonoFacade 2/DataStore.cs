@@ -17,7 +17,7 @@ namespace DataArchitecture
             {
                 ref Data<T>.DataWrapper element = ref data.GetDataWrapper(i);
                 if(!element.active) continue;
-                logics.TryRun(ref element.Data);
+                logics.TryRun(ref element.DataVolatile);
             }
         }
     }
@@ -56,8 +56,12 @@ namespace DataArchitecture
                 active = true;
                 this.data = getData;
             }
-            // We replace the 'ref get' with a pointer-based ref return
-            public ref T Data
+
+            /// <summary>
+            /// During Allocation, if SetCapacity is called, these refs will point to nothing
+            /// Don't store these if you are unsure about potential capacity cahnges
+            /// </summary>
+            public ref T DataVolatile
             {
                 get
                 {
@@ -96,7 +100,7 @@ namespace DataArchitecture
             data[nextIndex] = new DataWrapper(_data);
             return nextIndex++;
         }
-        public void Allocate(T _data, out int allocationId) => allocationId = Allocate(ref _data);
+        public void Allocate(ref T _data, out int allocationId) => allocationId = Allocate(ref _data);
 
 
         /// <summary>
@@ -136,7 +140,7 @@ namespace DataArchitecture
         public ref T GetData(int id)
         {
             ref DataWrapper element = ref GetDataWrapper(id);
-            return ref element.Data;
+            return ref element.DataVolatile;
         }
         
         
