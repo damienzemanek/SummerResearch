@@ -10,18 +10,29 @@ namespace LogicExamples
 {
     public static unsafe class ExampleLogic 
     {
-        // data (needs to be blittable)
+        // 1 BLITTABLE DATA
         public struct ExampleData
         {
             public float x;
         }
         
-        // concrete impementations
+        // 2 CONCRETE IMPLEMENTATIONS
         static void Run(ExampleData* data) => data->x += 1f;
         static bool ShouldRun(ExampleData* data) => data->x > 0;
         
+        // 3 CONCRETE OPERATION
         public static readonly LogicOperation<ExampleData> Operation = new(&Run, &ShouldRun);
         
+        
+        // 4 LOGICS CONTAINING OPERATION(S)
+        public static readonly Logics<ExampleData> OperationLogics;
+
+        // 5 STATIC CONSTRUCTOR INITIALIZING LOGICS
+        static ExampleLogic()
+        {
+            fixed (LogicOperation<ExampleData>* ptr = &Operation)
+                OperationLogics = ptr;
+        }
     }
 }
 

@@ -1,6 +1,8 @@
 using NUnit.Framework;
 using LogicArchitecture;
 using LogicExamples;
+using ProSMLogic;
+using StateArchitecture;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using static LogicExamples.ExampleLogic;
@@ -31,60 +33,66 @@ public class StateArchitectureTestSuite
     }
     
     [Test]
-    public unsafe void Test3_MultiSlot_Execution()
+    public void Test3_MultiSlot_Execution()
     {
         var exampleData = new ExampleData() { x = 1f };
     
-        // Use stackalloc instead of NativeArray to bypass the unmanaged check
-        // Logics is small, so this is safe for a test
-        LogicOperation<ExampleData>* handles = stackalloc LogicOperation<ExampleData>[2];
-        handles[0] = ExampleLogic.Operation;
-        handles[1] = ExampleLogic.Operation;
-
-        // multi-slot init using the stack pointer
-        var logic = new Logics<ExampleData>(handles, 2);
+        // We use a static helper to avoid unsafe code in the test method
+        var logic = MultiSlotLogic.Create(ExampleLogic.Operation, ExampleLogic.Operation);
 
         // run multi-slot (should run both handles: 1 + 1 + 1)
         logic.TryRun(ref exampleData);
 
         Assert.AreEqual(3f, exampleData.x);
-        // No Dispose needed for stackalloc
+    }
+
+    private static unsafe class MultiSlotLogic
+    {
+        private static readonly LogicOperation<ExampleData>[] Store = new LogicOperation<ExampleData>[10];
+        
+        public static Logics<ExampleData> Create(LogicOperation<ExampleData> op1, LogicOperation<ExampleData> op2)
+        {
+            Store[0] = op1;
+            Store[1] = op2;
+            fixed (LogicOperation<ExampleData>* ptr = Store)
+                return new Logics<ExampleData>(ptr, 2);
+        }
     }
 
     [Test]
     public unsafe void Test4_TickLogic_Handle_Execution()
     {
-        var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(
-            _deltaTime: 0.16f,
-            operation: ExampleLogic.Operation,
-            _coreData: new ExampleData() { x = 10f } );
+        fixed (LogicOperation<ExampleData>* opPtr = &ExampleLogic.Operation)
+        {
+            var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(
+                _deltaTime: 0.16f,
+                _stableOpPtr: opPtr,
+                _coreData: new ExampleData() { x = 10f });
 
-        var tickLogic = TickLogic<ExampleData>.Operation;
-        
-        
-        // execute the tick logic pipe
-        tickLogic.TryRun(ref tickData);
+            var tickLogic = TickLogic<ExampleData>.Operation;
 
-        // check if core data was modified through the pipe
-        Assert.AreEqual(11f, tickData.coreData.x);
+            // execute the tick logic pipe
+            tickLogic.TryRun(ref tickData);
+
+            // check if core data was modified through the pipe
+            Assert.AreEqual(11f, tickData.coreData.x);
+        }
     }
 
     [Test]
-    public unsafe void Test5_StateLogic_StaticDelegates_Assignment()
+    public void Test5_StateLogic_Delegates_Assignment()
     {
-        // verify static logic handles can be assigned
+        // verify logic handles can be assigned to StateData
         // these usually point to LogicHandles that process TickData
         
-        static void Run(TickLogic<ExampleData>.TickData<ExampleData>* data) { }
-        static bool ShouldRun(TickLogic<ExampleData>.TickData<ExampleData>* data) => true;
-        
-        LogicOperation<TickLogic<ExampleData>.TickData<ExampleData>> op = new(&Run, &ShouldRun);
-        
-        StateLogic<ExampleData>.OnUpdate = &op;
-        StateLogic<ExampleData>.OnEnterState = &op;
+        var stateData = new StateData<ExampleData>(0);
+        stateData.OnUpdate = TickLogic<ExampleData>.Operation;
+        stateData.OnEnterState = ExampleLogic.OperationLogics;
 
-        Assert.IsTrue(StateLogic<ExampleData>.OnUpdate.Count > 0);
-        Assert.IsTrue(StateLogic<ExampleData>.OnEnterState.Count > 0);
+        Assert.IsTrue(stateData.OnUpdate.Count > 0);
+        Assert.IsTrue(stateData.OnEnterState.Count > 0);
+        
+        stateData.transitions.Dispose();
     }
 
     // dummy implementations for delegate pointer testing

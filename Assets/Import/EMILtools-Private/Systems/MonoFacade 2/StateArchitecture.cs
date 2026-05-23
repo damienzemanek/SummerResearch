@@ -3,27 +3,14 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using DataArchitecture;
 using LogicArchitecture;
+using ProSMLogic;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 
 namespace StateArchitecture
 {
-
-
-
-    public struct StateData
-    {
-        const int TRANSITIONS_SIZE = 50;
-        
-        public int state;
-        public Data<Transition> transitions;
-        public StateData(int _state)
-        {
-            state = _state;
-            transitions = new Data<Transition>(TRANSITIONS_SIZE, Allocator.Persistent);
-        }
-    }
+    
 
     public struct Transition
     {

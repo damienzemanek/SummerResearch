@@ -44,8 +44,8 @@ namespace LogicArchitecture
     
     public readonly unsafe struct Logics<T> where T : unmanaged
     {
-        readonly LogicOperation<T>* operations;
-        readonly int count;
+        public readonly LogicOperation<T>* operations;
+        public readonly int count;
 
         public int Count => count;
 

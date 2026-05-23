@@ -11,10 +11,10 @@ public class MonoFacade2TestingSuite
     public void Test1_InitializeDataAndHandle()
     {
         var data = new ExampleLogic.ExampleData { x = 1f };
-        var handle = ExampleLogic.Operation;
+        var operation = ExampleLogic.Operation;
 
         Assert.AreEqual(1f, data.x);
-        Assert.IsNotNull(handle);
+        Assert.IsNotNull(operation);
     }
 
     /// <summary>
@@ -24,9 +24,9 @@ public class MonoFacade2TestingSuite
     public void Test2_ShouldRun()
     {
         var data = new ExampleLogic.ExampleData { x = 1f };
-        var handle = ExampleLogic.Operation;
+        var operation = ExampleLogic.Operation;
 
-        var shouldRun = handle.ShouldRun(in data);
+        var shouldRun = operation.ShouldRun(in data);
         Assert.IsTrue(shouldRun);
     }
 
@@ -37,9 +37,9 @@ public class MonoFacade2TestingSuite
     public void Test3_Runs()
     {
         var data = new ExampleLogic.ExampleData { x = 1f };
-        var handle = ExampleLogic.Operation;
+        var operation = ExampleLogic.Operation;
 
-        handle.Run(ref data);
+        operation.Run(ref data);    
 
         Assert.AreEqual(2f, data.x);
     }
@@ -52,12 +52,12 @@ public class MonoFacade2TestingSuite
     public void Test4_ShouldRunPassesRun()
     {
         var data = new ExampleLogic.ExampleData { x = 1f };
-        var handle = ExampleLogic.Operation;
+        var operation = ExampleLogic.Operation;
 
-        var shouldRun = handle.ShouldRun(in data);
+        var shouldRun = operation.ShouldRun(in data);
         Assert.IsTrue(shouldRun);
 
-        handle.Run(ref data);
+        operation.Run(ref data);    
 
         Assert.AreEqual(2f, data.x);
     }
@@ -70,12 +70,12 @@ public class MonoFacade2TestingSuite
     public void Test5_ShouldRunFailsRun()
     {
         var data = new ExampleLogic.ExampleData { x = 0f };
-        var handle = ExampleLogic.Operation;
+        var operation = ExampleLogic.Operation;
 
-        var shouldRun = handle.ShouldRun(in data);
+        var shouldRun = operation.ShouldRun(in data);
 
         if (shouldRun)
-            handle.Run(ref data);
+            operation.Run(ref data);
 
         Assert.AreEqual(0f, data.x);
     }

@@ -53,7 +53,7 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
 
     public DefaultButtonState defaultState;
     [SerializeReference][ShowIf("@triggerTransitions.HasFlag(ButtonTransitions.Click)")] public ClickButtonState clickState;
-    [SerializeReference][ShowIf("@triggerTransitions.HasFlag(ButtonTransitions.Enter)")] public EnterButtonState enterState;
+    [SerializeReference][ShowIf("@triggerTransitions.HasFlag(ButtonTransitions.Entry)")] public EnterButtonState enterState;
     [SerializeReference][ShowIf("@triggerTransitions.HasFlag(ButtonTransitions.Exit)")] public ExitButtonState exitState;
     [SerializeReference][ShowIf("@triggerTransitions.HasFlag(ButtonTransitions.Up)")] public UpButtonState upState;
     [SerializeReference][ShowIf("@triggerTransitions.HasFlag(ButtonTransitions.Down)")] public DownButtonState downState;
