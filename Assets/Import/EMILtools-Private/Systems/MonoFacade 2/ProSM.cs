@@ -21,8 +21,11 @@ namespace ProceduralStateMachine
         public int entryState;
         public int currentState;
         public int previousState;
+        
         public Data<StateData<TData>> states;
         public Data<Transition> anyTransitions;
+
+        public long enumTypeId; // hash of enum
         
         // time in state... etc..
 
@@ -35,27 +38,6 @@ namespace ProceduralStateMachine
             currentState = NOT_ENTERED_YET; // Call Entry() to set this
         }
     }
-    
-    // Separate Data Layer Handling
-    // public static class LayerLogic<TStates> where TStates : Enum // Handles the Layer data
-    // {
-    //     static LayerLogic()
-    //     {
-    //         if (Enum.GetUnderlyingType(typeof(TStates)) != typeof(int)) throw new InvalidOperationException($"{typeof(TStates).Name} must have an underlying type of int.");
-    //     }
-    //     
-    //     public static TStates GetState(ref LayerData data) => Unsafe.As<int, TStates>(ref data.currentState);
-    //     public static TStates GetEntryState(ref LayerData data) => Unsafe.As<int, TStates>(ref data.entryState);
-    //     public static TStates GetPreviousState(ref LayerData data) => Unsafe.As<int, TStates>(ref data.previousState);
-    //
-    //     public static void Transition(ref LayerData data, TStates to)
-    //     {
-    //         data.previousState = data.currentState;
-    //         data.currentState = Unsafe.As<TStates, int>(ref to);
-    //         
-    //         //enter/exit logic using StateLogics
-    //     }
-    // }
 
     // Basically the logic for ProSM
     public static class ProSMLogic
@@ -63,6 +45,15 @@ namespace ProceduralStateMachine
         // Initalization
         public static void Initialize<TData>(this ref ProSM<TData> fsm, int layerCount)  where TData : unmanaged
         {
+            // Prevent memory leaks (Input Validation)
+            if (fsm.layers.active) 
+                throw new InvalidOperationException("ProSM is already initialized. Dispose it before initializing again.");
+    
+            // Valid Layer Count (Input Validation)
+            if (layerCount <= 0) 
+                throw new ArgumentException("layerCount must be greater than 0.");
+
+            
             fsm.layers = new Data<LayerData<TData>>(layerCount, Allocator.Persistent);
             // Creating the layer data
             for (int i = 0; i < layerCount; i++)
@@ -76,10 +67,19 @@ namespace ProceduralStateMachine
             where TData : unmanaged
             where TStates : Enum
         {
-            // Set the layer data to default values, or maybe take in a struct of values
-            var stateCount = Enum.GetValues(typeof(TStates)).Length;
+            // Valid Layer (Input Validation)
+            if (layerIndex < 0 || layerIndex >= fsm.layers.currentSize)
+                throw new IndexOutOfRangeException($"Layer index {layerIndex} is out of bounds (Size: {fsm.layers.currentSize}).");
+            
             ref var layerData = ref fsm.layers.Get(layerIndex);
-            if(layerData.isInitialized) throw new InvalidOperationException("Layer already initialized, use another index");
+            
+            // Layer not already initialized (Input Validation)
+            if(layerData.isInitialized) 
+                throw new InvalidOperationException("Layer already initialized, use another index");
+            
+            layerData.enumTypeId = typeof(TStates).GetHashCode(); // Store type hash
+            var stateCount = Enum.GetValues(typeof(TStates)).Length;
+
             var entryState = Unsafe.As<TStates, int>(ref defaultState);
             Debug.Log(entryState);
             layerData.Init(stateCount, entryState);
@@ -96,6 +96,15 @@ namespace ProceduralStateMachine
         public static void AddAnyTransition<TStates, TData>(this ref ProSM<TData> fsm, int layerIndex, TStates to, ref Predicate predicate)
             where TData : unmanaged
         {
+            // Valid Enum (Input Validation)
+            if (typeof(TStates).GetHashCode() != fsm.layers[layerIndex].enumTypeId)
+                throw new ArgumentException($"Enum type '{typeof(TStates).Name}' does not match the type used to initialize layer {layerIndex}.");
+            
+            // Valid To (Input Validation)
+            int toIndex = Unsafe.As<TStates, int>(ref to);
+            if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
+                throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
+            
             var transition = new Transition(Unsafe.As<TStates, int>(ref to), ref predicate);
             fsm.layers[layerIndex].anyTransitions.Allocate(ref transition, out int _);
         }
@@ -103,9 +112,22 @@ namespace ProceduralStateMachine
         public static void AddDirectTransition<TStates, TData>(this ref ProSM<TData> fsm, int layerIndex, TStates from, TStates to, ref Predicate predicate)    
             where TData : unmanaged
         {
-            
-            var transition = new Transition(Unsafe.As<TStates, int>(ref to), ref predicate);
-            fsm.layers[layerIndex].states[(Unsafe.As<TStates, int>(ref from))].transitions.Allocate(ref transition, out int _);
+            // Valid Enum (Input Validation)
+            if (typeof(TStates).GetHashCode() != fsm.layers[layerIndex].enumTypeId)
+                throw new ArgumentException($"Enum type '{typeof(TStates).Name}' does not match the type used to initialize layer {layerIndex}.");
+
+            // Valid From (Input Validation)
+            int fromIndex = Unsafe.As<TStates, int>(ref from);
+            if (fromIndex < 0 || fromIndex >= fsm.layers[layerIndex].states.currentSize)
+                throw new ArgumentOutOfRangeException(nameof(from), $"State {from} (index {fromIndex}) does not exist in layer {layerIndex}.");
+
+            // Valid To (Input Validation)
+            int toIndex = Unsafe.As<TStates, int>(ref to);
+            if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
+                throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
+
+            var transition = new Transition(toIndex, ref predicate);
+            fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
         }
         
         
@@ -125,10 +147,14 @@ namespace ProceduralStateMachine
             // Poll each layer -> Transition if found a next state
             for (int i = 0; i < fsm.layers.currentSize; i++)
             {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS // Hot path so im using the compiler directive to remove it in builds
+                // Check if layer has been entered (Sequential Input Validation)
+                if (fsm.layers[i].currentState == -1) 
+                    throw new InvalidOperationException($"Layer {i} has not been entered. Call Entry() before polling transitions.");
+#endif 
                 fsm.TryPollTransitionsOnLayer(ref fsm.layers[i], ref data, out int nextState);
-                if (nextState == NO_NEW_LAYER_FOUND) continue;
-                fsm.TransitionOnLayer_CallExitEnter(i, nextState, ref data);
-                return; // early exit once a transition in found for that layer
+                if (nextState != NO_NEW_LAYER_FOUND) 
+                    fsm.TransitionOnLayer_CallExitEnter(i, nextState, ref data);
             }
         }
         
@@ -144,6 +170,7 @@ namespace ProceduralStateMachine
                 ref var transition = ref layerdata.anyTransitions.Get(i);
                 if (transition.condition.Evaluate(ref data))
                 {
+                    if(layerdata.currentState == transition.to) continue;
                     nextState = transition.to;
                     return true;
                 }
@@ -155,6 +182,7 @@ namespace ProceduralStateMachine
                 ref var transition = ref currentStateData.transitions.Get(i);
                 if (transition.condition.Evaluate(ref data))
                 {
+                    if(layerdata.currentState == transition.to) continue;
                     nextState = transition.to;
                     return true;
                 }
@@ -180,13 +208,18 @@ namespace ProceduralStateMachine
         
         
         // Entry (Awake)
-        public static void Entry<TData>(this ref ProSM<TData> fsm)
+        public static void Entry<TData>(this ref ProSM<TData> fsm, ref TData data)
             where TData : unmanaged
         {
+            // (Sequential Input Validation)
+            if (!fsm.layers.active || fsm.layers.currentSize == 0)
+                throw new InvalidOperationException("ProSM Entry failed: No layers have been initialized. Call Initialize() and InitLayer() first.");
+            
             for(int i = 0; i < fsm.layers.currentSize; i++)
             {
                 ref var layerData = ref fsm.layers.Get(i);
                 layerData.currentState = layerData.entryState;
+                fsm.layers[i].states[layerData.currentState].OnEnterState.TryRun(ref data);
                 // enter logic using StateLogics
             }
         }
@@ -202,17 +235,26 @@ namespace ProceduralStateMachine
                 currentState.OnLateUpdate.TryRun(ref data);
             }
         }
-        
-        // Disposal
     }
     
     
     
     
-    /// <summary>
     /// Instance Defined Procedural State Machine Handle
     // Layer enums to be declared by the user
+
+    /// <summary>
+    /// Instance Defined Procedural State Machine Handle
+    /// Layer enums to be declared by the user
+    ///
+    /// - Anys come before Directs
+    /// - Transitions to self state are ignored
+    /// - All data has to be blittable
+    ///
+    /// - Throws when calling Entry() when there are no layers initialized
+    /// - Thr
     /// </summary>
+    /// <typeparam name="TData"></typeparam>
     public struct ProSM<TData> where TData : unmanaged
     {
         // make internal later (public rn for testing)
@@ -220,6 +262,8 @@ namespace ProceduralStateMachine
         
         public void Dispose()
         {
+            if (!layers.active) throw new InvalidOperationException("ProSM is already disposed.");
+            
             for (int i = 0; i < layers.currentSize; i++)
             {
                 for(int z = 0; z < layers[i].states.currentSize; z++)
