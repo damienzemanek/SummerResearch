@@ -37,39 +37,26 @@ namespace ProSMLogic
     {
         public struct TickData<TData> where TData : unmanaged
         {
-            internal float deltaTime;
-            internal Logics<TData> coreLogics;
-            public TData coreData;
-            public TickData(float _deltaTime, Logics<TData> _coreLogics, TData _coreData)
+            public float deltaTime;
+            public Logics<TData> coreLogics;
+            readonly TData* coreData;
+            public ref TData CoreData => ref *coreData;
+            public TickData(float _deltaTime, Logics<TData> _coreLogics, ref TData _coreData)
             {
                 deltaTime = _deltaTime;
                 coreLogics = _coreLogics;
-                coreData = _coreData;
-            }
-            
-            /// <summary>
-            /// Should be passed in regularly bc the logic op should be readonly
-            /// copy is fine once for fluid API calling
-            /// </summary>
-            /// <param name="_deltaTime"></param>
-            /// <param name="op"></param>
-            /// <param name="_coreData"></param>
-            public TickData(float _deltaTime, LogicOperation<TData> op, TData _coreData)
-            {
-                deltaTime = _deltaTime;
-                coreData = _coreData;
-                coreLogics = new Logics<TData>(ref op);
+                coreData = (TData*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _coreData);
             }
         }
     
         // concrete impementations
-        static void Run(TickData<TData>* data) => data->coreLogics.TryRun(ref data->coreData);
+        // Deref pointer satisfies ref T param on TryRun
+        static void Run(TickData<TData>* data) => data->coreLogics.TryRun(ref data->CoreData);
         static bool ShouldRun(TickData<TData>* data) => true;
     
         // Tick Logic (this specfici implementation) only has 1 operation
         // When used in state logic, it will be added as an operation ITSELF to another Logics
         static readonly LogicOperation<TickData<TData>> TickOperation = new(&Run, &ShouldRun); 
         public static readonly Logics<TickData<TData>> Operation = new (ref TickOperation);
-        
     }
 }

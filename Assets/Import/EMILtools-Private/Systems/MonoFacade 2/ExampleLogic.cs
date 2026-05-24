@@ -24,10 +24,12 @@ namespace LogicExamples
         
         // 3 CONCRETE OPERATION
         // - Compose `Logics` with your implementation using `Operations`
-        public static readonly LogicOperation<ExampleData> Operation = new(&Run, &ShouldRun);
+        public static LogicOperation<ExampleData> Operation = new(&Run, &ShouldRun);
         
         // 4 LOGICS CONTAINING OPERATION(S)
         // - Add `Logics` to your ProSM, composed of `LogicOperation`s
+        // (!) Not all `Logics` classes will have an OperationLogics handle (!)
+        //   - Logics will be composed of many different operatiuons from seperate static Logic classes
         public static readonly Logics<ExampleData> OperationLogics = new(ref Operation);
     }
 }

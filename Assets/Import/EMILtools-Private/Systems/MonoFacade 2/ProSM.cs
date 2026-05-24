@@ -232,17 +232,46 @@ namespace ProceduralStateMachine
             }
         }
         
-        // State Ticks
-        public static void TickCurrentStates<TData>(ref ProSM<TData> fsm, ref TickLogic<TData>.TickData<TData> data) where TData : unmanaged
+        // State Ticks with internal TickData creation
+        public static void TickUpdate<TData>(this ref ProSM<TData> fsm, float deltaTime, Logics<TData> coreLogics, ref TData data) 
+            where TData : unmanaged
         {
+            // Create TickData on the stack - pointer is guaranteed stable for the duration of this call
+            var tickData = new TickLogic<TData>.TickData<TData>(deltaTime, coreLogics, ref data);
+    
             for (int i = 0; i < fsm.layers.currentSize; i++)
             {
                 var currentState = fsm.layers[i].states[fsm.layers[i].currentState];
-                currentState.OnUpdate.TryRun(ref data);
-                currentState.OnFixedUpdate.TryRun(ref data);
-                currentState.OnLateUpdate.TryRun(ref data);
+                currentState.OnUpdate.TryRun(ref tickData);
             }
         }
+
+        public static void TickFixedUpdate<TData>(this ref ProSM<TData> fsm, float deltaTime, Logics<TData> coreLogics, ref TData data)
+            where TData : unmanaged
+        {
+            // Create TickData on the stack - pointer is guaranteed stable for the duration of this call
+            var tickData = new TickLogic<TData>.TickData<TData>(deltaTime, coreLogics, ref data);
+    
+            for (int i = 0; i < fsm.layers.currentSize; i++)
+            {
+                var currentState = fsm.layers[i].states[fsm.layers[i].currentState];
+                currentState.OnFixedUpdate.TryRun(ref tickData);
+            }
+        }
+
+        public static void TickLateUpdate<TData>(this ref ProSM<TData> fsm, float deltaTime, Logics<TData> coreLogics, ref TData data)
+            where TData : unmanaged
+        {
+            // Create TickData on the stack - pointer is guaranteed stable for the duration of this call
+            var tickData = new TickLogic<TData>.TickData<TData>(deltaTime, coreLogics, ref data);
+    
+            for (int i = 0; i < fsm.layers.currentSize; i++)
+            {
+                var currentState = fsm.layers[i].states[fsm.layers[i].currentState];
+                currentState.OnLateUpdate.TryRun(ref tickData);
+            }
+        }
+        
     }
     
     

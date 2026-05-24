@@ -54,10 +54,11 @@ public class LogicsTestSuite
     [Test]
     public unsafe void Test4_TickLogic_Handle_Execution()
     {
+        var data = new ExampleData() { x = 10f };
         var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(
             _deltaTime: 0.16f,
-            op: ExampleLogic.Operation, // This is fine that its not a ref cause the Op is reaodonly
-            _coreData: new ExampleData() { x = 10f });
+            _coreLogics: ExampleLogic.OperationLogics, // This is fine that its not a ref cause the Op is reaodonly
+            ref data);
         
         var tickLogic = TickLogic<ExampleData>.Operation;
 
@@ -65,7 +66,7 @@ public class LogicsTestSuite
         tickLogic.TryRun(ref tickData);
 
         // check if core data was modified through the pipe
-        Assert.AreEqual(11f, tickData.coreData.x);
+        Assert.AreEqual(11f, tickData.CoreData.x);
     }
 
     [Test]

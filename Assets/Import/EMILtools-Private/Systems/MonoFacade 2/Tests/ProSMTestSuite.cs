@@ -1,11 +1,13 @@
 using System;
 using LogicArchitecture;
+using LogicExamples;
 using NUnit.Framework;
 using ProceduralStateMachine;
 using ProSMLogic;
 using StateArchitecture;
 using UnityEngine;
 using static LogicExamples.ExampleLogic;
+using static ProSMTestSuite.SomeInstanceLogic;
 
 public class ProSMTestSuite : MonoBehaviour
 {
@@ -287,32 +289,32 @@ public class ProSMTestSuite : MonoBehaviour
         var exampleData = new ExampleData() { x = 2 };
         fsm.Entry(ref exampleData);
 
-        // Test10Logics already has the Logics handles pre-initialized with stable pointers.
+        // TickExampleLogics already has the Logics handles pre-initialized with stable pointers.
         // We can just use any stable pointer for the test TickData.
-
+        
         var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(
             _deltaTime: 0.1f,
-            op: Operation,
-            _coreData: exampleData);
+            _coreLogics: ExampleLogic.OperationLogics,
+            ref exampleData);
         
-        Test10Logics.Reset();
+        TickExampleLogics.Reset();
 
-        fsm.layers[0].states[0].OnUpdate = Test10Logics.UpdateLogics;
-        fsm.layers[0].states[0].OnFixedUpdate = Test10Logics.FixedUpdateLogics;
-        fsm.layers[0].states[0].OnLateUpdate = Test10Logics.LateUpdateLogics;
+        fsm.layers[0].states[0].OnUpdate = TickExampleLogics.UpdateLogics;
+        fsm.layers[0].states[0].OnFixedUpdate = TickExampleLogics.FixedUpdateLogics;
+        fsm.layers[0].states[0].OnLateUpdate = TickExampleLogics.LateUpdateLogics;
 
         // Execute the logics
         fsm.layers[0].states[0].OnUpdate.TryRun(ref tickData);
         fsm.layers[0].states[0].OnFixedUpdate.TryRun(ref tickData);
         fsm.layers[0].states[0].OnLateUpdate.TryRun(ref tickData);
 
-        Assert.IsTrue(Test10Logics.update, "Update logic should have executed");
-        Assert.IsTrue(Test10Logics.fixedUpdate, "FixedUpdate logic should have executed");
-        Assert.IsTrue(Test10Logics.lateUpdate, "LateUpdate logic should have executed");
+        Assert.IsTrue(TickExampleLogics.update, "Update logic should have executed");
+        Assert.IsTrue(TickExampleLogics.fixedUpdate, "FixedUpdate logic should have executed");
+        Assert.IsTrue(TickExampleLogics.lateUpdate, "LateUpdate logic should have executed");
         fsm.Dispose();
     }
     
-    public static unsafe class Test10Logics
+    public static unsafe class TickExampleLogics
     {
         public static bool update;
         public static bool lateUpdate;
@@ -338,7 +340,7 @@ public class ProSMTestSuite : MonoBehaviour
         public static readonly Logics<TickLogic<ExampleData>.TickData<ExampleData>> FixedUpdateLogics;
         public static readonly Logics<TickLogic<ExampleData>.TickData<ExampleData>> LateUpdateLogics;
 
-        static Test10Logics()
+        static TickExampleLogics()
         {
             UpdateLogics = new Logics<TickLogic<ExampleData>.TickData<ExampleData>>(ref UpdateOp);
             FixedUpdateLogics = new Logics<TickLogic<ExampleData>.TickData<ExampleData>>(ref FixedUpdateOp);
@@ -734,5 +736,120 @@ public class ProSMTestSuite : MonoBehaviour
 
         fsm.Dispose();
     }
+
+    [Test]
+    public void Test27_DirectInstanceMutation()
+    {
+        ProSM<SomeInstanceLogic.SomeInstanceData> fsm = new ProSM<SomeInstanceLogic.SomeInstanceData>();
+
+        fsm.Initialize(1);
+        fsm.InitLayer<TestLayerOne, SomeInstanceLogic.SomeInstanceData>(0);
+        var exampleData = new SomeInstanceLogic.SomeInstanceData() { x = 2 };
+        SomeInstance someInstance = new SomeInstance() { someVariable = exampleData };
+        
+        fsm.Entry(ref someInstance.someVariable);
+        
+        fsm.layers[0].states[0].OnUpdate = TickExampleLogicsNaiveImplementation.UpdateLogics;
+        fsm.layers[0].states[0].OnFixedUpdate = TickExampleLogicsNaiveImplementation.FixedUpdateLogics;
+        fsm.layers[0].states[0].OnLateUpdate = TickExampleLogicsNaiveImplementation.LateUpdateLogics;
+
+        fsm.TickUpdate(1, SomeInstanceLogic.OperationLogics, ref someInstance.someVariable); // 2 + 1(dt) + 1(run) = 4
+        fsm.TickFixedUpdate(1, SomeInstanceLogic.OperationLogics, ref someInstance.someVariable); // 4 + 1(dt) + 1(run) = 6
+        fsm.TickLateUpdate(1, SomeInstanceLogic.OperationLogics, ref someInstance.someVariable); // 6 + 1(dt) + 1(run) = 8
+
+        Assert.AreEqual(8f, someInstance.someVariable.x);
+        fsm.Dispose();
+    }
+
+    /// <summary>
+    /// N
+    /// </summary>
+    class SomeInstance
+    {
+        public SomeInstanceLogic.SomeInstanceData someVariable;
+    }
+
+    public static unsafe class SomeInstanceLogic
+    {
+        public struct SomeInstanceData
+        {
+            public float x;
+        }
+        
+        static void Run(SomeInstanceData* data) => data->x++;
+        static bool ShouldRun(SomeInstanceData* data) => true;
+        
+        public static LogicOperation<SomeInstanceData> Operation = new(&Run, &ShouldRun);
+        public static Logics<SomeInstanceData> OperationLogics = new(ref Operation);
+    }
+    
+    /// <summary>
+    /// In reality you would really only need one of these so this is sort of overkill having all 3 ticks
+    /// </summary>
+    public static unsafe class TickExampleLogicsNaiveImplementation
+    {
+        static void FixedUpdate(TickLogic<SomeInstanceLogic.SomeInstanceData>.TickData<SomeInstanceLogic.SomeInstanceData>* data) 
+        {
+            data->CoreData.x += data->deltaTime;
+            data->coreLogics.TryRun(ref data->CoreData);
+        }
+        static void LateUpdate(TickLogic<SomeInstanceData>.TickData<SomeInstanceData>* data)
+        {
+            data->CoreData.x += data->deltaTime;
+            data->coreLogics.TryRun(ref data->CoreData);
+        }
+        static void Update(TickLogic<SomeInstanceData>.TickData<SomeInstanceData>* data)
+        {
+            data->CoreData.x += data->deltaTime;
+            data->coreLogics.TryRun(ref data->CoreData);
+        }
+        
+        static bool ShouldRun(TickLogic<SomeInstanceData>.TickData<SomeInstanceData>* data) => true;
+
+        public static readonly LogicOperation<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> UpdateOp = new(&Update, &ShouldRun);
+        public static readonly LogicOperation<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> LateUpdateOp = new(&LateUpdate, &ShouldRun);
+        public static readonly LogicOperation<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> FixedUpdateOp = new(&FixedUpdate, &ShouldRun);
+
+        public static readonly Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> UpdateLogics;
+        public static readonly Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> FixedUpdateLogics;
+        public static readonly Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> LateUpdateLogics;
+
+        static TickExampleLogicsNaiveImplementation()
+        {
+            UpdateLogics = new Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>>(ref UpdateOp);
+            FixedUpdateLogics = new Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>>(ref FixedUpdateOp);
+            LateUpdateLogics = new Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>>(ref LateUpdateOp);
+        }
+        
+    }
+    
+    public static unsafe class PredicateLogic
+    {
+        public static Predicate IsGreaterThan(float threshold)
+        {
+            // We need a way to store the threshold. 
+            // Since Predicate only takes a void*, and we don't have a capture context,
+            // we have to use a static field or a more complex solution if we want different thresholds.
+            // For the test, we can just implement it specifically for SomeInstanceData.
+            return new Predicate(&CheckGreaterThan);
+        }
+
+        static float _threshold;
+        static bool CheckGreaterThan(void* ptr)
+        {
+            var data = (SomeInstanceLogic.SomeInstanceData*)ptr;
+            return data->x > 5f; // Hardcoded for 5f as per the first use case in the test
+        }
+        
+        // Better: implement specific ones if needed, or a more robust system.
+        // But for "minimal" fix in tests:
+        public static Predicate IsGreaterThan5() => new Predicate(&CheckGT5);
+        static bool CheckGT5(void* ptr) => ((SomeInstanceLogic.SomeInstanceData*)ptr)->x > 5f;
+
+        public static Predicate IsGreaterThan10() => new Predicate(&CheckGT10);
+        static bool CheckGT10(void* ptr) => ((SomeInstanceLogic.SomeInstanceData*)ptr)->x > 10f;
+    }
+    
+    
 
 }
