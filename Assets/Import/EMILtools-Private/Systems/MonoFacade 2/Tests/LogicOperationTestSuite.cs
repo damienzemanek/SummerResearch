@@ -2,7 +2,7 @@ using NUnit.Framework;
 using LogicArchitecture;
 using LogicExamples;
 
-public class MonoFacade2TestingSuite
+public class LogicOperationTestSuite
 {
     /// <summary>
     /// This test has to pass because data is initialized and handle is assigned
@@ -10,10 +10,10 @@ public class MonoFacade2TestingSuite
     [Test]
     public void Test1_InitializeDataAndHandle()
     {
-        var data = new ExampleLogic.ExampleData { x = 1f };
+        var data = new ExampleLogic.ExampleData { x = 2f };
         var operation = ExampleLogic.Operation;
 
-        Assert.AreEqual(1f, data.x);
+        Assert.AreEqual(2f, data.x);
         Assert.IsNotNull(operation);
     }
 
@@ -23,7 +23,7 @@ public class MonoFacade2TestingSuite
     [Test]
     public void Test2_ShouldRun()
     {
-        var data = new ExampleLogic.ExampleData { x = 1f };
+        var data = new ExampleLogic.ExampleData { x = 2f };
         var operation = ExampleLogic.Operation;
 
         var shouldRun = operation.ShouldRun(in data);
@@ -36,12 +36,12 @@ public class MonoFacade2TestingSuite
     [Test]
     public void Test3_Runs()
     {
-        var data = new ExampleLogic.ExampleData { x = 1f };
+        var data = new ExampleLogic.ExampleData { x = 2f };
         var operation = ExampleLogic.Operation;
 
         operation.Run(ref data);    
 
-        Assert.AreEqual(2f, data.x);
+        Assert.AreEqual(3f, data.x);
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public class MonoFacade2TestingSuite
     [Test]
     public void Test4_ShouldRunPassesRun()
     {
-        var data = new ExampleLogic.ExampleData { x = 1f };
+        var data = new ExampleLogic.ExampleData { x = 2f };
         var operation = ExampleLogic.Operation;
 
         var shouldRun = operation.ShouldRun(in data);
@@ -59,7 +59,7 @@ public class MonoFacade2TestingSuite
 
         operation.Run(ref data);    
 
-        Assert.AreEqual(2f, data.x);
+        Assert.AreEqual(3f, data.x);
     }
 
     /// <summary>

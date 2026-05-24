@@ -46,11 +46,19 @@ namespace ProSMLogic
                 coreLogics = _coreLogics;
                 coreData = _coreData;
             }
-            public TickData(float _deltaTime, LogicOperation<TData>* _stableOpPtr, TData _coreData)
+            
+            /// <summary>
+            /// Should be passed in regularly bc the logic op should be readonly
+            /// copy is fine once for fluid API calling
+            /// </summary>
+            /// <param name="_deltaTime"></param>
+            /// <param name="op"></param>
+            /// <param name="_coreData"></param>
+            public TickData(float _deltaTime, LogicOperation<TData> op, TData _coreData)
             {
                 deltaTime = _deltaTime;
                 coreData = _coreData;
-                coreLogics = new Logics<TData>(_stableOpPtr, 1);
+                coreLogics = new Logics<TData>(ref op);
             }
         }
     
@@ -60,14 +68,8 @@ namespace ProSMLogic
     
         // Tick Logic (this specfici implementation) only has 1 operation
         // When used in state logic, it will be added as an operation ITSELF to another Logics
-        public static readonly Logics<TickData<TData>> Operation; // Uses implicit operator Logics(LogicOperation* ptr)
         static readonly LogicOperation<TickData<TData>> TickOperation = new(&Run, &ShouldRun); 
-
-        // Use a static constructor to safely capture the pointer to the static field
-        static TickLogic()
-        {
-            fixed (LogicOperation<TickData<TData>>* ptr = &TickOperation)
-                Operation = ptr; 
-        }
+        public static readonly Logics<TickData<TData>> Operation = new (ref TickOperation);
+        
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using LogicArchitecture;
 using LogicExamples;
@@ -13,70 +14,58 @@ public class StateArchitectureTestSuite
     [Test]
     public void Test1_Initializes()
     {
-        var exampleData = new ExampleData() { x = 1f };
+        var exampleData = new ExampleData() { x = 2f };
         var logic = ExampleLogic.Operation;
         
         Assert.IsNotNull(exampleData);
         Assert.IsNotNull(logic);
-        Assert.AreEqual(1f, exampleData.x);
+        Assert.AreEqual(2f, exampleData.x);
     }
     
     [Test]
     public void Test2_RunThroughSlotCall()
     {
-        var exampleData = new ExampleData() { x = 1f };
+        var exampleData = new ExampleData() { x = 2f };
         var logic = ExampleLogic.Operation;
         
         logic.Run(ref exampleData);
         
-        Assert.AreEqual(2f, exampleData.x);
+        Assert.AreEqual(3f, exampleData.x);
     }
     
     [Test]
     public void Test3_MultiSlot_Execution()
     {
-        var exampleData = new ExampleData() { x = 1f };
+        var exampleData = new ExampleData() { x = 2f };
     
-        // We use a static helper to avoid unsafe code in the test method
-        var logic = MultiSlotLogic.Create(ExampleLogic.Operation, ExampleLogic.Operation);
+        var logic = new Logics<ExampleData>(stackalloc LogicOperation<ExampleData>[] 
+        { 
+            ExampleLogic.Operation, 
+            ExampleLogic.Operation 
+        });
 
         // run multi-slot (should run both handles: 1 + 1 + 1)
         logic.TryRun(ref exampleData);
 
-        Assert.AreEqual(3f, exampleData.x);
+        Assert.AreEqual(4f, exampleData.x);
     }
-
-    private static unsafe class MultiSlotLogic
-    {
-        private static readonly LogicOperation<ExampleData>[] Store = new LogicOperation<ExampleData>[10];
-        
-        public static Logics<ExampleData> Create(LogicOperation<ExampleData> op1, LogicOperation<ExampleData> op2)
-        {
-            Store[0] = op1;
-            Store[1] = op2;
-            fixed (LogicOperation<ExampleData>* ptr = Store)
-                return new Logics<ExampleData>(ptr, 2);
-        }
-    }
+    
 
     [Test]
     public unsafe void Test4_TickLogic_Handle_Execution()
     {
-        fixed (LogicOperation<ExampleData>* opPtr = &ExampleLogic.Operation)
-        {
-            var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(
-                _deltaTime: 0.16f,
-                _stableOpPtr: opPtr,
-                _coreData: new ExampleData() { x = 10f });
+        var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(
+            _deltaTime: 0.16f,
+            op: ExampleLogic.Operation, // This is fine that its not a ref cause the Op is reaodonly
+            _coreData: new ExampleData() { x = 10f });
+        
+        var tickLogic = TickLogic<ExampleData>.Operation;
 
-            var tickLogic = TickLogic<ExampleData>.Operation;
+        // execute the tick logic pipe
+        tickLogic.TryRun(ref tickData);
 
-            // execute the tick logic pipe
-            tickLogic.TryRun(ref tickData);
-
-            // check if core data was modified through the pipe
-            Assert.AreEqual(11f, tickData.coreData.x);
-        }
+        // check if core data was modified through the pipe
+        Assert.AreEqual(11f, tickData.coreData.x);
     }
 
     [Test]

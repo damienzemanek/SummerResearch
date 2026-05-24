@@ -116,7 +116,7 @@ namespace DataArchitecture
             data[id] = new DataWrapper(newData);
         }
         
-        public ref T this[int id] => ref GetData(id);
+        public ref T this[int id] => ref Get(id);
 
         /// <summary>
         /// used by the batcher to get the data
@@ -137,7 +137,7 @@ namespace DataArchitecture
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public ref T GetData(int id)
+        public ref T Get(int id)
         {
             ref DataWrapper element = ref GetDataWrapper(id);
             return ref element.DataVolatile;

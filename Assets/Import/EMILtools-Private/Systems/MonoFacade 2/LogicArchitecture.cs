@@ -1,4 +1,6 @@
 using System;
+using System.Runtime.InteropServices;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace LogicArchitecture
@@ -48,24 +50,32 @@ namespace LogicArchitecture
         public readonly int count;
 
         public int Count => count;
-
-        public Logics(LogicOperation<T>* _operations, int count)
+        
+        // Single Ctor
+        public Logics(ref LogicOperation<T> op)
         {
-            operations = _operations;
-            this.count = count;
+            operations = (LogicOperation<T>*)UnsafeUtility.AddressOf(ref op);
+            count = 1;
         }
-
+        
+        // Multi Operation(s)
+        public Logics(ReadOnlySpan<LogicOperation<T>> ops)
+        {
+            if(ops.Length == 0) throw new ArgumentException("Operations array cannot be empty");
+            operations = (LogicOperation<T>*)UnsafeUtility.AddressOf(ref MemoryMarshal.GetReference(ops));
+            count = ops.Length;
+        }
         public void TryRun(ref T data)
         {
             for (int i = 0; i < count; i++)
                 if (operations[i].ShouldRun(data))
                     operations[i].Run(ref data);
         }
-        
-
-        public static implicit operator Logics<T>(LogicOperation<T>* stableOpPtr)
-        {
-            return new Logics<T>(stableOpPtr, 1);
-        }
     }
 }
+
+// Note another way to convert a ref struct into a pointer is by using
+// (MyStruct*)UnsafeUtility.AddressOf(ref myStruct)
+// To param in multiuple of the same ref struct use ReadonlySpan, and Memorymarshal its reference
+// public readonly LogicOperation<T>* operations;    
+// operations = (LogicOperation<T>*)UnsafeUtility.AddressOf(ref MemoryMarshal.GetReference(ops));      

@@ -78,7 +78,7 @@ namespace ProceduralStateMachine
         {
             // Set the layer data to default values, or maybe take in a struct of values
             var stateCount = Enum.GetValues(typeof(TStates)).Length;
-            ref var layerData = ref fsm.layers.GetData(layerIndex);
+            ref var layerData = ref fsm.layers.Get(layerIndex);
             if(layerData.isInitialized) throw new InvalidOperationException("Layer already initialized, use another index");
             var entryState = Unsafe.As<TStates, int>(ref defaultState);
             Debug.Log(entryState);
@@ -108,25 +108,40 @@ namespace ProceduralStateMachine
             fsm.layers[layerIndex].states[(Unsafe.As<TStates, int>(ref from))].transitions.Allocate(ref transition, out int _);
         }
         
-        // PollTransitions
-        
         
 
         /// <summary>
         /// Transition handling
         /// </summary>
-        /// <param name="_"></param>
-        /// <param name="layerdata"></param>
+        /// <param name="fsm"></param>
         /// <param name="data"></param>
-        /// <param name="nextState"></param>
         /// <typeparam name="TData"></typeparam>
         /// <returns></returns>
+        public static void TryPollTransitions<TData>(this ref ProSM<TData> fsm, ref TData data)
+            where TData : unmanaged
+        {
+            const int NO_NEW_LAYER_FOUND = -1;
+
+            // Poll each layer -> Transition if found a next state
+            for (int i = 0; i < fsm.layers.currentSize; i++)
+            {
+                fsm.TryPollTransitionsOnLayer(ref fsm.layers[i], ref data, out int nextState);
+                if (nextState == NO_NEW_LAYER_FOUND) continue;
+                fsm.TransitionOnLayer_CallExitEnter(i, nextState, ref data);
+                return; // early exit once a transition in found for that layer
+            }
+        }
+        
+        // public for testing
         public static bool TryPollTransitionsOnLayer<TData>(this ref ProSM<TData> fsm, ref LayerData<TData> layerdata, ref TData data, out int nextState)
             where TData : unmanaged
         {
+            const int NO_NEW_LAYER_FOUND = -1;
+
+            
             for(int i = 0; i < layerdata.anyTransitions.currentSize; i++)
             {
-                ref var transition = ref layerdata.anyTransitions.GetData(i);
+                ref var transition = ref layerdata.anyTransitions.Get(i);
                 if (transition.condition.Evaluate(ref data))
                 {
                     nextState = transition.to;
@@ -134,10 +149,10 @@ namespace ProceduralStateMachine
                 }
             }
             
-            ref var currentStateData = ref layerdata.states.GetData(layerdata.currentState);
+            ref var currentStateData = ref layerdata.states.Get(layerdata.currentState);
             for(int i = 0; i < currentStateData.transitions.currentSize; i++)        
             {
-                ref var transition = ref currentStateData.transitions.GetData(i);
+                ref var transition = ref currentStateData.transitions.Get(i);
                 if (transition.condition.Evaluate(ref data))
                 {
                     nextState = transition.to;
@@ -145,11 +160,12 @@ namespace ProceduralStateMachine
                 }
             }
             
-            nextState = -1;
+            nextState = NO_NEW_LAYER_FOUND;
             return false;
         }
+        
 
-        public static void TransitionOnLayer<TData>(this ref ProSM<TData> fsm, int layer, int nextState, ref TData data)
+        public static void TransitionOnLayer_CallExitEnter<TData>(this ref ProSM<TData> fsm, int layer, int nextState, ref TData data)
             where TData : unmanaged
         {
             //previous
@@ -169,7 +185,7 @@ namespace ProceduralStateMachine
         {
             for(int i = 0; i < fsm.layers.currentSize; i++)
             {
-                ref var layerData = ref fsm.layers.GetData(i);
+                ref var layerData = ref fsm.layers.Get(i);
                 layerData.currentState = layerData.entryState;
                 // enter logic using StateLogics
             }

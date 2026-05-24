@@ -18,21 +18,13 @@ namespace LogicExamples
         
         // 2 CONCRETE IMPLEMENTATIONS
         static void Run(ExampleData* data) => data->x += 1f;
-        static bool ShouldRun(ExampleData* data) => data->x > 0;
+        static bool ShouldRun(ExampleData* data) => data->x > 1;
         
         // 3 CONCRETE OPERATION
         public static readonly LogicOperation<ExampleData> Operation = new(&Run, &ShouldRun);
         
-        
         // 4 LOGICS CONTAINING OPERATION(S)
-        public static readonly Logics<ExampleData> OperationLogics;
-
-        // 5 STATIC CONSTRUCTOR INITIALIZING LOGICS
-        static ExampleLogic()
-        {
-            fixed (LogicOperation<ExampleData>* ptr = &Operation)
-                OperationLogics = ptr;
-        }
+        public static readonly Logics<ExampleData> OperationLogics = new(ref Operation);
     }
 }
 
