@@ -131,7 +131,7 @@ public class ProSMTestSuite : MonoBehaviour
     }
     
     /// <summary>
-    /// Issue here: InitLayer is called with 2 layers to init, however Polling needs to check each layer, however
+    /// Solved Issue here: InitLayer is called with 2 layers to init, however Polling needs to check each layer, however
     /// since we didnt init layer 2, we are polling for a transiton on a layer that DNE
     /// I opted for the solution checking state validitiy in Entry instead of requiring the SM to poll for a valid states
     /// This means I am not being defensive and operating my systems in an always valid state, which is better than being defensive
@@ -793,7 +793,7 @@ public class ProSMTestSuite : MonoBehaviour
             data->CoreData.x += data->deltaTime;
             data->coreLogics.TryRun(ref data->CoreData);
         }
-        static void LateUpdate(TickLogic<SomeInstanceData>.TickData<SomeInstanceData>* data)
+        static void LateUpdate(TickLogic<SomeInstanceLogic.SomeInstanceData>.TickData<SomeInstanceData>* data)
         {
             data->CoreData.x += data->deltaTime;
             data->coreLogics.TryRun(ref data->CoreData);

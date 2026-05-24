@@ -271,9 +271,7 @@ namespace ProceduralStateMachine
                 currentState.OnLateUpdate.TryRun(ref tickData);
             }
         }
-        
     }
-    
     
     
 
@@ -287,6 +285,16 @@ namespace ProceduralStateMachine
     /// - Disposal is idempotent and safe to call multiple times
     /// - Blittable and unmanaged compatible for high performance
     /// - Multi-layered support for parallel state logic
+    ///
+    /// Usage:
+    /// - Initialize() with the number of layers
+    /// - InitLayer() for each layer with the default state
+    /// - Add_AnyTransition() for any transitions
+    /// - Add_DirectTransition() for direct transitions
+    /// - Entry() to start the FSM
+    /// - TickUpdate(), TickFixedUpdate(), TickLateUpdate() to call tick logic
+    /// - TryPollTransitions() to check for transitions and update the FSM
+    /// - Dispose() to clean up resources
     ///
     /// Validation / Exception Handling:
     /// - Throws ArgumentException if TData is not a blittable type
