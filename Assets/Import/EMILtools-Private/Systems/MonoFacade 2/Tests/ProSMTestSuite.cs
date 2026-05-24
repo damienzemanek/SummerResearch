@@ -109,7 +109,7 @@ public class ProSMTestSuite : MonoBehaviour
     {
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
 
-        fsm.Initialize(2);
+        fsm.Initialize(1);
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         var exampleData1 = new ExampleData() { x = 1 };
         var exampleData2 = new ExampleData() { x = 2 };
@@ -128,12 +128,19 @@ public class ProSMTestSuite : MonoBehaviour
         
     }
     
+    /// <summary>
+    /// Issue here: InitLayer is called with 2 layers to init, however Polling needs to check each layer, however
+    /// since we didnt init layer 2, we are polling for a transiton on a layer that DNE
+    /// I opted for the solution checking state validitiy in Entry instead of requiring the SM to poll for a valid states
+    /// This means I am not being defensive and operating my systems in an always valid state, which is better than being defensive
+    /// </summary>
+    
     [Test] 
     public void Test6_AnyTransitions_TryPollTransitions_DirectTransition_ReturnsBool()
     {
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
 
-        fsm.Initialize(2);
+        fsm.Initialize(1);
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         var exampleData1 = new ExampleData() { x = 1 };
         var exampleData2 = new ExampleData() { x = 2 };
@@ -160,7 +167,7 @@ public class ProSMTestSuite : MonoBehaviour
     {
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
 
-        fsm.Initialize(2);
+        fsm.Initialize(1);
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         var exampleData1 = new ExampleData() { x = 1 };
         var exampleData2 = new ExampleData() { x = 2 };
@@ -188,7 +195,7 @@ public class ProSMTestSuite : MonoBehaviour
     {
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
 
-        fsm.Initialize(2);
+        fsm.Initialize(1);
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         var exampleData1 = new ExampleData() { x = 1 };
         var exampleData2 = new ExampleData() { x = 2 };
@@ -218,7 +225,7 @@ public class ProSMTestSuite : MonoBehaviour
     {
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
 
-        fsm.Initialize(2);
+        fsm.Initialize(1);
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         
         var exampleData = new ExampleData() { x = 2 };
@@ -559,6 +566,171 @@ public class ProSMTestSuite : MonoBehaviour
         Assert.Throws<InvalidOperationException>(() => {
             fsm.Entry(ref data);
         }, "Should throw if Entry is called on an uninitialized FSM");
+
+        fsm.Dispose();
+    }
+    
+    [Test]
+    public void Test18_DoubleInitialize_Throws()
+    {
+        ProSM<ExampleData> fsm = new ProSM<ExampleData>();
+        fsm.Initialize(1);
+
+        Assert.Throws<InvalidOperationException>(() => {
+            fsm.Initialize(1);
+        }, "Should throw if Initialize is called on an already active FSM");
+
+        fsm.Dispose();
+    }
+
+    [Test]
+    public void Test19_InvalidLayerCount_Throws()
+    {
+        ProSM<ExampleData> fsm = new ProSM<ExampleData>();
+        
+        Assert.Throws<ArgumentException>(() => {
+            fsm.Initialize(0);
+        }, "Should throw if layerCount is 0");
+
+        Assert.Throws<ArgumentException>(() => {
+            fsm.Initialize(-1);
+        }, "Should throw if layerCount is negative");
+    }
+
+    [Test]
+    public void Test20_InitLayer_OutOfBounds_Throws()
+    {
+        ProSM<ExampleData> fsm = new ProSM<ExampleData>();
+        fsm.Initialize(1); // Only index 0 is valid
+
+        Assert.Throws<IndexOutOfRangeException>(() => {
+            fsm.InitLayer<TestLayerOne, ExampleData>(1);
+        }, "Should throw if layerIndex is equal to currentSize");
+
+        Assert.Throws<IndexOutOfRangeException>(() => {
+            fsm.InitLayer<TestLayerOne, ExampleData>(-1);
+        }, "Should throw if layerIndex is negative");
+
+        fsm.Dispose();
+    }
+
+    [Test]
+    public void Test21_InitLayer_DoubleInit_Throws()
+    {
+        ProSM<ExampleData> fsm = new ProSM<ExampleData>();
+        fsm.Initialize(1);
+        fsm.InitLayer<TestLayerOne, ExampleData>(0);
+
+        Assert.Throws<InvalidOperationException>(() => {
+            fsm.InitLayer<TestLayerOne, ExampleData>(0);
+        }, "Should throw if the same layer index is initialized twice");
+
+        fsm.Dispose();
+    }
+
+    [Test]
+    public void Test22_AddTransition_InvalidState_Throws()
+    {
+        ProSM<ExampleData> fsm = new ProSM<ExampleData>();
+        fsm.Initialize(1);
+        fsm.InitLayer<TestLayerOne, ExampleData>(0);
+        
+        var predicate = ExamplePredicates.IsGreaterThanOne();
+        
+        // TestLayerOne has 3 states (0, 1, 2). Index 3 is invalid.
+        // We cast an int to the Enum to simulate an invalid/out-of-range state
+        TestLayerOne invalidState = (TestLayerOne)3;
+
+        // Any Transition: Invalid 'to'
+        Assert.Throws<ArgumentOutOfRangeException>(() => {
+            fsm.AddAnyTransition(0, invalidState, ref predicate);
+        }, "Should throw if 'to' state index is out of bounds");
+
+        // Direct Transition: Invalid 'from'
+        Assert.Throws<ArgumentOutOfRangeException>(() => {
+            fsm.AddDirectTransition(0, invalidState, TestLayerOne.L1S2, ref predicate);
+        }, "Should throw if 'from' state index is out of bounds");
+
+        // Direct Transition: Invalid 'to'
+        Assert.Throws<ArgumentOutOfRangeException>(() => {
+            fsm.AddDirectTransition(0, TestLayerOne.L1S1, invalidState, ref predicate);
+        }, "Should throw if 'to' state index is out of bounds in direct transition");
+
+        fsm.Dispose();
+    }
+
+    [Test]
+    public void Test23_PollBeforeEntry_Throws()
+    {
+        // This test only runs if ENABLE_UNITY_COLLECTIONS_CHECKS is defined
+        ProSM<ExampleData> fsm = new ProSM<ExampleData>();
+        fsm.Initialize(1);
+        fsm.InitLayer<TestLayerOne, ExampleData>(0);
+        
+        var data = new ExampleData() { x = 2 };
+
+        // We specifically avoid calling fsm.Entry(ref data) here
+        
+        Assert.Throws<InvalidOperationException>(() => {
+            fsm.TryPollTransitions(ref data);
+        }, "Should throw if TryPollTransitions is called before Entry()");
+
+        fsm.Dispose();
+    }
+
+    [Test]
+    public void Test24_DoubleDispose_IsSafe()
+    {
+        ProSM<ExampleData> fsm = new ProSM<ExampleData>();
+        fsm.Initialize(1);
+        fsm.Dispose();
+
+        // Should not throw
+        Assert.DoesNotThrow(() => {
+            fsm.Dispose();
+        }, "Dispose should be safe to call multiple times or on uninitialized FSMs.");
+    }
+    
+    [Test]
+    public void Test25_EntryWithUninitializedLayer_Throws()
+    {
+        // Setup: Initialize with 2 layers but only configure the first one
+        ProSM<ExampleData> fsm = new ProSM<ExampleData>();
+        fsm.Initialize(2);
+        
+        // Initialize Layer 0
+        fsm.InitLayer<TestLayerOne, ExampleData>(0);
+        
+        // Layer 1 is allocated but NOT initialized via InitLayer()
+        
+        var exampleData = new ExampleData() { x = 0 };
+
+        // Assert: Entry should throw because Layer 1 is uninitialized
+        var ex = Assert.Throws<InvalidOperationException>(() => {
+            fsm.Entry(ref exampleData);
+        });
+
+        // Optional: Verify the error message contains the specific layer index
+        StringAssert.Contains("Layer 1 has not been initialized", ex.Message);
+
+        fsm.Dispose();
+    }
+    
+    // Helper struct for testing non-blittable validation
+    public struct NonBlittableData
+    {
+        public bool someBool; // bool is unmanaged but NOT blittable in Unity/C#
+    }
+
+    [Test]
+    public void Test26_NonBlittableData_Throws()
+    {
+        ProSM<NonBlittableData> fsm = new ProSM<NonBlittableData>();
+        
+        // Should throw ArgumentException because NonBlittableData contains a bool
+        Assert.Throws<ArgumentException>(() => {
+            fsm.Initialize(1);
+        }, "Should throw when initializing with a non-blittable TData type");
 
         fsm.Dispose();
     }

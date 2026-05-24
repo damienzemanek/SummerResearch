@@ -11,19 +11,23 @@ namespace LogicExamples
     public static unsafe class ExampleLogic 
     {
         // 1 BLITTABLE DATA
+        // - Cache friendly data that exerts no gc pressure
         public struct ExampleData
         {
             public float x;
         }
         
         // 2 CONCRETE IMPLEMENTATIONS
+        // - Implement your `Operations` statically, auto-validated using `ShouldRun`
         static void Run(ExampleData* data) => data->x += 1f;
         static bool ShouldRun(ExampleData* data) => data->x > 1;
         
         // 3 CONCRETE OPERATION
+        // - Compose `Logics` with your implementation using `Operations`
         public static readonly LogicOperation<ExampleData> Operation = new(&Run, &ShouldRun);
         
         // 4 LOGICS CONTAINING OPERATION(S)
+        // - Add `Logics` to your ProSM, composed of `LogicOperation`s
         public static readonly Logics<ExampleData> OperationLogics = new(ref Operation);
     }
 }

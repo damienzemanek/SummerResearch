@@ -146,7 +146,11 @@ namespace DataArchitecture
         
         public void Dispose()
         {
-            if (data.IsCreated) data.Dispose();
+            if (data.IsCreated)
+            {
+                data.Dispose();
+                active = false;
+            }
         }
     }
     

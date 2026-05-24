@@ -8,7 +8,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using static LogicExamples.ExampleLogic;
 
-public class StateArchitectureTestSuite
+public class LogicsTestSuite
 {
     
     [Test]

@@ -6,6 +6,7 @@ using LogicArchitecture;
 using ProSMLogic;
 using StateArchitecture;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace ProceduralStateMachine
@@ -45,6 +46,10 @@ namespace ProceduralStateMachine
         // Initalization
         public static void Initialize<TData>(this ref ProSM<TData> fsm, int layerCount)  where TData : unmanaged
         {
+            // Ensure TData is blittable (Input Validation)
+            if (!UnsafeUtility.IsBlittable<TData>())
+                throw new ArgumentException($"Type '{typeof(TData).Name}' is not blittable. TData must be a blittable type to ensure safety in unmanaged memory operations.");
+            
             // Prevent memory leaks (Input Validation)
             if (fsm.layers.active) 
                 throw new InvalidOperationException("ProSM is already initialized. Dispose it before initializing again.");
@@ -215,9 +220,12 @@ namespace ProceduralStateMachine
             if (!fsm.layers.active || fsm.layers.currentSize == 0)
                 throw new InvalidOperationException("ProSM Entry failed: No layers have been initialized. Call Initialize() and InitLayer() first.");
             
+            
             for(int i = 0; i < fsm.layers.currentSize; i++)
             {
                 ref var layerData = ref fsm.layers.Get(i);
+                if(layerData.isInitialized == false) 
+                    throw new InvalidOperationException($"ProSM Entry failed: Layer {i} has not been initialized. Call InitLayer() before calling Entry().");
                 layerData.currentState = layerData.entryState;
                 fsm.layers[i].states[layerData.currentState].OnEnterState.TryRun(ref data);
                 // enter logic using StateLogics
@@ -239,22 +247,28 @@ namespace ProceduralStateMachine
     
     
     
-    
-    /// Instance Defined Procedural State Machine Handle
-    // Layer enums to be declared by the user
 
     /// <summary>
     /// Instance Defined Procedural State Machine Handle
     /// Layer enums to be declared by the user
     ///
-    /// - Anys come before Directs
-    /// - Transitions to self state are ignored
-    /// - All data has to be blittable
+    /// Features/Configuration:
+    /// - Any Transitions are evaluated first, followed by direct transitions
+    /// - Self Transitions are explicitly ignored (skipped)
+    /// - Disposal is idempotent and safe to call multiple times
+    /// - Blittable and unmanaged compatible for high performance
+    /// - Multi-layered support for parallel state logic
     ///
-    /// - Throws when calling Entry() when there are no layers initialized
-    /// - Thr
+    /// Validation / Exception Handling:
+    /// - Throws ArgumentException if TData is not a blittable type
+    /// - Throws InvalidOperationException if Entry() is called without initialized layers
+    /// - Throws InvalidOperationException if an allocated layer was never set up via InitLayer()
+    /// - Throws InvalidOperationException if TryPollTransitions() is called before Entry() (Unity checks only)
+    /// - Throws ArgumentException if enum types do not match the layer's initialized type
+    /// - Throws ArgumentOutOfRangeException if state indices are invalid for the layer
+    /// - Throws InvalidOperationException if Initialize() is called on an already active FSM
     /// </summary>
-    /// <typeparam name="TData"></typeparam>
+    /// <typeparam name="TData">Unmanaged data structure passed through all state logic</typeparam>
     public struct ProSM<TData> where TData : unmanaged
     {
         // make internal later (public rn for testing)
@@ -262,7 +276,11 @@ namespace ProceduralStateMachine
         
         public void Dispose()
         {
-            if (!layers.active) throw new InvalidOperationException("ProSM is already disposed.");
+            if (!layers.active)
+            {
+                Debug.LogWarning("(IDEMPOTENT ACTION) ProSM Dispose called, but ProSM was not initialized or was already disposed. No action taken.");
+                return;
+            }
             
             for (int i = 0; i < layers.currentSize; i++)
             {
