@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using DataArchitecture;
 using LogicArchitecture;
 using ProSMLogic;
@@ -11,8 +12,24 @@ using UnityEngine;
 
 namespace ProceduralStateMachine
 {
-    
-    
+
+    public struct BlittableManagedReference<T> where T : class
+    {
+        IntPtr Handle;
+        readonly bool IsAllocated => Handle != IntPtr.Zero;
+        public static BlittableManagedReference<T> Allocate(T target) => new() { Handle = GCHandle.ToIntPtr(GCHandle.Alloc(target)) };
+        public readonly T Target
+        {
+            get { if (!IsAllocated) throw new InvalidOperationException("The managed reference has not been allocated or has already been Freed");
+                return (T)((GCHandle)Handle).Target; }
+        }
+        public void Free()
+        {
+            if (Handle == IntPtr.Zero) return;
+            ((GCHandle)Handle).Free();
+            Handle = IntPtr.Zero;
+        }
+    }
     
     // Separate Data Layer
     public struct LayerData<TData> where TData : unmanaged // Just the Layer data
@@ -30,8 +47,11 @@ namespace ProceduralStateMachine
         public Data<Transition> anyTransitions;
 
         public long enumTypeId; // hash of enum
-        
-        // time in state... etc..
+
+        public float timeInState;
+
+        public byte transitionEventFlagged;
+        public bool IsTransitionEventFlagged => transitionEventFlagged != 0;
 
         public void Init(int statesSize, int _entryState = 0)
         {
@@ -40,6 +60,7 @@ namespace ProceduralStateMachine
             isInitialized = 1;
             entryState = _entryState;
             currentState = NOT_ENTERED_YET; // Call Entry() to set this
+            timeInState = 0;
         }
     }
 
@@ -138,6 +159,34 @@ namespace ProceduralStateMachine
             fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
         }
         
+        // public static void AddDirectTimedTransition<TStates, TData>(this ref ProSM<TData> fsm, int layerIndex, TStates from, TStates to, float duration)    
+        //     where TData : unmanaged
+        // {
+        //     // Valid Enum (Input Validation)
+        //     if (typeof(TStates).GetHashCode() != fsm.layers[layerIndex].enumTypeId)
+        //         throw new ArgumentException($"Enum type '{typeof(TStates).Name}' does not match the type used to initialize layer {layerIndex}.");
+        //
+        //     // Valid From (Input Validation)
+        //     int fromIndex = Unsafe.As<TStates, int>(ref from);
+        //     if (fromIndex < 0 || fromIndex >= fsm.layers[layerIndex].states.currentSize)
+        //         throw new ArgumentOutOfRangeException(nameof(from), $"State {from} (index {fromIndex}) does not exist in layer {layerIndex}.");
+        //
+        //     // Valid To (Input Validation)
+        //     int toIndex = Unsafe.As<TStates, int>(ref to);
+        //     if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
+        //         throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
+        //
+        //     //var transition = new Transition((short)toIndex, ref predicate);
+        //     unsafe
+        //     {
+        //         Predicate alwaysTrue = new Predicate(&TrueCondition);
+        //         var transition = new Transition((short)toIndex, ref alwaysTrue, duration);
+        //         fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
+        //         static bool TrueCondition(void* ptr) => true;
+        //     }
+        // }
+        
+        
         
 
         /// <summary>
@@ -176,7 +225,8 @@ namespace ProceduralStateMachine
             for(int i = 0; i < layerdata.anyTransitions.currentSize; i++)
             {
                 ref var transition = ref layerdata.anyTransitions.Get(i);
-                if (transition.condition.Evaluate(ref data))
+                Debug.Log("[ANY] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.duration);
+                if (transition.condition.Evaluate(ref data) && layerdata.timeInState >= transition.duration)
                 {
                     if(layerdata.currentState == transition.to) continue;
                     nextState = transition.to;
@@ -188,7 +238,8 @@ namespace ProceduralStateMachine
             for(int i = 0; i < currentStateData.transitions.currentSize; i++)        
             {
                 ref var transition = ref currentStateData.transitions.Get(i);
-                if (transition.condition.Evaluate(ref data))
+                Debug.Log("[DIRECT] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.duration);
+                if (transition.condition.Evaluate(ref data) && layerdata.timeInState >= transition.duration)
                 {
                     if(layerdata.currentState == transition.to) continue;
                     nextState = transition.to;
@@ -211,6 +262,8 @@ namespace ProceduralStateMachine
             //next
             fsm.layers[layer].currentState = nextState;
             fsm.layers[layer].states[nextState].OnEnterState.TryRunAllSequentially(ref data);
+            
+            fsm.layers[layer].timeInState = 0;
         }
         
         
@@ -230,6 +283,7 @@ namespace ProceduralStateMachine
                 if(layerData.IsInitialized == false) 
                     throw new InvalidOperationException($"ProSM Entry failed: Layer {i} has not been initialized. Call InitLayer() before calling Entry().");
                 layerData.currentState = layerData.entryState;
+                fsm.layers[i].timeInState = 0;
                 fsm.layers[i].states[layerData.currentState].OnEnterState.TryRunAllSequentially(ref data);
                 // enter logic using StateLogics
             }
@@ -244,6 +298,7 @@ namespace ProceduralStateMachine
     
             for (int i = 0; i < fsm.layers.currentSize; i++)
             {
+                fsm.layers[i].timeInState += deltaTime;
                 var currentState = fsm.layers[i].states[fsm.layers[i].currentState];
                 currentState.OnUpdate.TryRunAllSequentially(ref tickData);
             }

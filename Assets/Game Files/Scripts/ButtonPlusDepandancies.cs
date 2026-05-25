@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using LogicArchitecture;
+using ProceduralStateMachine;
 using Sirenix.OdinInspector;
 using StateArchitecture;
 using UnityEngine;
@@ -9,7 +10,7 @@ using static ButtonPlus;
 
 public static class ButtonPlusDepandancies
 {
-    public enum States { Default, Hover, Pressed }
+    public enum BtnStates { Default, Hover, Pressed }
 
     [Flags]
     public enum Callbacks
@@ -71,7 +72,7 @@ public static class ButtonPlusDepandancies
         {
             public byte isHovered;      public bool IsHovered => isHovered == 1;
             public byte isClicked;      public bool IsClicked => isClicked == 1;
-            public IntPtr buttonHandle;
+            public BlittableManagedReference<ButtonPlus> ManagedBtn;
         }
         public SharedBtnState* sharedSharedBtnState;
         public BtnEvent btnEventType;
@@ -120,13 +121,13 @@ public static class ButtonPlusDepandancies
         }
     }
     
-        public unsafe static class ButtonPlusOperations
+    public static unsafe class ButtonPlusOperations
     {
         public static LogicOperation<BtnData> SetActive = new(&SetActiveRun, &SetActiveShouldRun);
         static bool SetActiveShouldRun(BtnData* data) => true;
         static void SetActiveRun(BtnData* data)
         {
-            var btn = (ButtonPlus)GCHandle.FromIntPtr(data->sharedSharedBtnState->buttonHandle).Target;
+            var btn = data->sharedSharedBtnState->ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,
@@ -142,7 +143,7 @@ public static class ButtonPlusDepandancies
         static bool DeactiveAllChildrenButKeepOAnectiveShouldRun(BtnData* data) => true;
         static void DeactiveAllChildrenButKeepOAnectiveRun(BtnData* data)
         {
-            var btn = (ButtonPlus)GCHandle.FromIntPtr(data->sharedSharedBtnState->buttonHandle).Target;
+            var btn = data->sharedSharedBtnState->ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,
@@ -166,7 +167,7 @@ public static class ButtonPlusDepandancies
         static bool AnimateShouldRun(BtnData* data) => true;
         static void AnimateRun(BtnData* data)
         {
-            var btn = (ButtonPlus)GCHandle.FromIntPtr(data->sharedSharedBtnState->buttonHandle).Target;
+            var btn = data->sharedSharedBtnState->ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,
@@ -184,7 +185,7 @@ public static class ButtonPlusDepandancies
         static bool BtnUnityEventShouldRun(BtnData* data) => true;
         static void BtnUnityEventRun(BtnData* data)
         {
-            var btn = (ButtonPlus)GCHandle.FromIntPtr(data->sharedSharedBtnState->buttonHandle).Target;
+            var btn = data->sharedSharedBtnState->ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,
@@ -202,7 +203,7 @@ public static class ButtonPlusDepandancies
         static bool PlaySoundShouldRun(BtnData* data) => true;
         static void PlaySoundRun(BtnData* data)
         {
-            var btn = (ButtonPlus)GCHandle.FromIntPtr(data->sharedSharedBtnState->buttonHandle).Target;
+            var btn = data->sharedSharedBtnState->ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,

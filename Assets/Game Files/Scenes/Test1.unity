@@ -637,8 +637,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61b7fc2d636a21247b516b69ecc6aa78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonPlusV2
-  ButtonEvents: 7
-  enter:
+  buttonBtnEvents: 7
+  enterRefs:
     Callbacks: 2
     SetActiveData:
       active: 1
@@ -652,7 +652,11 @@ MonoBehaviour:
       unityEvent:
         m_PersistentCalls:
           m_Calls: []
-  exit:
+    PlaySound:
+      audioSource: {fileID: 0}
+      audioClip: {fileID: 0}
+      looping: 0
+  exitRefs:
     Callbacks: 2
     SetActiveData:
       active: 0
@@ -666,8 +670,12 @@ MonoBehaviour:
       unityEvent:
         m_PersistentCalls:
           m_Calls: []
-  click:
-    Callbacks: 14
+    PlaySound:
+      audioSource: {fileID: 0}
+      audioClip: {fileID: 0}
+      looping: 0
+  clickRefs:
+    Callbacks: 10
     SetActiveData:
       active: 0
       target: {fileID: 0}
@@ -692,6 +700,10 @@ MonoBehaviour:
               m_StringArgument: 
               m_BoolArgument: 1
             m_CallState: 2
+    PlaySound:
+      audioSource: {fileID: 0}
+      audioClip: {fileID: 0}
+      looping: 0
 --- !u!222 &917824066
 CanvasRenderer:
   m_ObjectHideFlags: 0
