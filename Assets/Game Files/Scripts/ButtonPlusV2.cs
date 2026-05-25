@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using DataArchitecture;
 using LogicArchitecture;
 using ProceduralStateMachine;
@@ -18,7 +19,7 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
         public GameObject target;
     }
     [Serializable] 
-    public struct DeactiveAllChildrenButKeepOAnective
+    public struct ChildsDeactivateKeepSelfActive
     {
         public GameObject activeChild;
     }
@@ -27,21 +28,25 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
     {
         public byte isHovered;      public bool IsHovered => isHovered == 1;
         public byte isClicked;      public bool IsClicked => isClicked == 1;
+        public IntPtr buttonHandle;
     }
     
     public unsafe struct BtnData
     {
         public SharedBtnState* sharedSharedBtnState;
-        public SetActive* SetActiveData;
-        public DeactiveAllChildrenButKeepOAnective* DeactiveAllChildrenButKeepOAnectiveData;
+        public Event eventType;
     }
     
     [Serializable]
     public struct BtnReferences
     {
         public Callbacks Callbacks;
-        public SetActive SetActiveData;
-        public DeactiveAllChildrenButKeepOAnective DeactiveAllChildrenButKeepOAnectiveData;
+
+        private bool ShowSetActive => (Callbacks & Callbacks.SetActive) != 0;
+        private bool ShowDeactive => (Callbacks & Callbacks.ChildsDeactivateKeepSelfActive) != 0;
+
+        [ShowIf(nameof(ShowSetActive))] public SetActive SetActiveData;
+        [ShowIf(nameof(ShowDeactive))] public ChildsDeactivateKeepSelfActive childsDeactivateKeepSelfActiveData;
     }
     
     static unsafe class ButtonPredicates
@@ -50,22 +55,22 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
         public static Predicate IsHovered() => new(&isHovered);
         static bool isHovered(void* ptr)
         {
-            SharedBtnState* data = (SharedBtnState*)ptr;
-            return data->IsHovered;
+            BtnData* data = (BtnData*)ptr;
+            return data->sharedSharedBtnState->IsHovered;
         }
         
         public static Predicate IsNotHovered() => new(&isNotHovered);
         static bool isNotHovered(void* ptr)
         {
-            SharedBtnState* data = (SharedBtnState*)ptr;
-            return !data->IsHovered;
+            BtnData* data = (BtnData*)ptr;
+            return !data->sharedSharedBtnState->IsHovered;
         }
         
         public static Predicate IsClicked() => new(&isClicked);
         static bool isClicked(void* ptr)
         {
-            SharedBtnState* data = (SharedBtnState*)ptr;
-            return data->IsClicked;
+            BtnData* data = (BtnData*)ptr;
+            return data->sharedSharedBtnState->IsClicked;
         }
     }
     
@@ -74,7 +79,7 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
     {
         None = 0,
         SetActive = 1 << 0,
-        DeactiveAllChildrenButKeepOAnective = 1 << 1,
+        ChildsDeactivateKeepSelfActive = 1 << 1,
         ButtonUnityEvent = 1 << 2,
         Animate = 1 << 3,
         AudioPlayFromSoundUser = 1 << 4,
@@ -112,9 +117,14 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
     
     // Pubbis
     public Event ButtonEvents;
-    [ShowIf("@(ButtonEvents & Event.Enter) == Event.Enter")] public BtnReferences enter;
-    [ShowIf("@(ButtonEvents & Event.Exit) == Event.Exit")] public BtnReferences exit;
-    [ShowIf("@(ButtonEvents & Event.Click) == Event.Click")] public BtnReferences click;
+
+    private bool ShowEnter => (ButtonEvents & Event.Enter) != 0;
+    private bool ShowExit => (ButtonEvents & Event.Exit) != 0;
+    private bool ShowClick => (ButtonEvents & Event.Click) != 0;
+
+    [ShowIf(nameof(ShowEnter))] public BtnReferences enter;
+    [ShowIf(nameof(ShowExit))] public BtnReferences exit;
+    [ShowIf(nameof(ShowClick))] public BtnReferences click;
     
 
     
@@ -124,8 +134,13 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
     // AudioPlayFromSoundUser
     // DisapearFade
 
+    private GCHandle btnHandle;
+
     void Awake()
     {
+        btnHandle = GCHandle.Alloc(this);
+        sharedBtnState.Value.buttonHandle = GCHandle.ToIntPtr(btnHandle);
+
         fsm.Initialize(1);
         fsm.InitLayer<States, BtnData>(0);
         PackLogics();
@@ -147,7 +162,7 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
                 buffer = new NativeList<LogicOperation<BtnData>>(Allocator.Persistent);
     
                 if (callbacks.HasFlag(Callbacks.SetActive)) buffer.Add(ButtonPlusOperations.SetActive);
-                if (callbacks.HasFlag(Callbacks.DeactiveAllChildrenButKeepOAnective)) buffer.Add(ButtonPlusOperations.DeactiveAllChildrenButKeepOAnective);
+                if (callbacks.HasFlag(Callbacks.ChildsDeactivateKeepSelfActive)) buffer.Add(ButtonPlusOperations.DeactiveAllChildrenButKeepOAnective);
 
                 if(buffer.Length == 0) Debug.LogError("No Logic Operations were added to the buffer, but the event was still flagged. Please check your ButtonEvents and Callbacks flags.");
                 return new Logics<BtnData>(buffer.AsReadOnlySpan());
@@ -158,20 +173,17 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
         {
             if(ButtonEvents.HasFlag(Event.Exit))
             {
-                exitStateData.Value.SetActiveData = &exit.SetActiveData;
-                exitStateData.Value.DeactiveAllChildrenButKeepOAnectiveData = &exit.DeactiveAllChildrenButKeepOAnectiveData;
+                exitStateData.Value.eventType = Event.Exit;
                 exitStateData.Value.sharedSharedBtnState = sharedBtnState.Ptr;
             }
             if(ButtonEvents.HasFlag(Event.Enter))
             {
-                enterStateData.Value.SetActiveData = &enter.SetActiveData;
-                enterStateData.Value.DeactiveAllChildrenButKeepOAnectiveData = &enter.DeactiveAllChildrenButKeepOAnectiveData;
+                enterStateData.Value.eventType = Event.Enter;
                 enterStateData.Value.sharedSharedBtnState = sharedBtnState.Ptr;
             }
             if(ButtonEvents.HasFlag(Event.Click))
             {
-                clickStateData.Value.SetActiveData = &click.SetActiveData;
-                clickStateData.Value.DeactiveAllChildrenButKeepOAnectiveData = &click.DeactiveAllChildrenButKeepOAnectiveData;
+                clickStateData.Value.eventType = Event.Click;
                 clickStateData.Value.sharedSharedBtnState = sharedBtnState.Ptr;
             }
         }
@@ -193,6 +205,9 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
             fsm.AddDirectTransition(0, States.Default, States.Hover, ref isHoveredPredicate.Value);
             fsm.AddDirectTransition(0, States.Hover, States.Default, ref isNotHoveredPredicate.Value);
             fsm.AddDirectTransition(0, States.Hover, States.Pressed, ref isClickedPredicate.Value);
+            fsm.AddDirectTransition(0, States.Pressed, States.Hover, ref isHoveredPredicate.Value);
+            fsm.AddDirectTransition(0, States.Pressed, States.Default, ref isNotHoveredPredicate.Value);
+
         }
     }
     
@@ -203,6 +218,7 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
     {
         enterStateData.Value.sharedSharedBtnState->isHovered = 1;
         fsm.TryPollTransitions(ref enterStateData.Value);
+        Debug.Log("Pointer Entered");
     }
     
     public unsafe void OnPointerExit(PointerEventData eventData)    
@@ -210,25 +226,51 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
         exitStateData.Value.sharedSharedBtnState->isHovered = 0;
         clickStateData.Value.sharedSharedBtnState->isClicked = 0;
         fsm.TryPollTransitions(ref exitStateData.Value);   
+        Debug.Log("Pointer Exited");
     }
     public unsafe void OnPointerClick(PointerEventData eventData)          
     {                                                      
         clickStateData.Value.sharedSharedBtnState->isClicked = 1;
-        fsm.TryPollTransitions(ref clickStateData.Value);                  
+        fsm.TryPollTransitions(ref clickStateData.Value);  
+        Debug.Log("Pointer Clicked");
+        clickStateData.Value.sharedSharedBtnState->isClicked = 0;
     }                                                                      
 
 
     public unsafe static class ButtonPlusOperations
     {
         public static LogicOperation<BtnData> SetActive = new(&SetActiveRun, &SetActiveShouldRun);
-        static void SetActiveRun(BtnData* data) => data->SetActiveData->target.SetActive(data->SetActiveData->active);
+        static void SetActiveRun(BtnData* data)
+        {
+            var btn = (ButtonPlusV2)GCHandle.FromIntPtr(data->sharedSharedBtnState->buttonHandle).Target;
+            BtnReferences refs = data->eventType switch
+            {
+                Event.Enter => btn.enter,
+                Event.Exit => btn.exit,
+                Event.Click => btn.click,
+                _ => btn.exit
+            };
+            if (refs.SetActiveData.target != null)
+                refs.SetActiveData.target.SetActive(refs.SetActiveData.active);
+        }
         static bool SetActiveShouldRun(BtnData* data) => true;
         
         public static LogicOperation<BtnData> DeactiveAllChildrenButKeepOAnective = new(&DeactiveAllChildrenButKeepOAnectiveRun, &DeactiveAllChildrenButKeepOAnectiveShouldRun);
 
         static void DeactiveAllChildrenButKeepOAnectiveRun(BtnData* data)
         {
-            ref DeactiveAllChildrenButKeepOAnective dataRef = ref *data->DeactiveAllChildrenButKeepOAnectiveData;
+            var btn = (ButtonPlusV2)GCHandle.FromIntPtr(data->sharedSharedBtnState->buttonHandle).Target;
+            BtnReferences refs = data->eventType switch
+            {
+                Event.Enter => btn.enter,
+                Event.Exit => btn.exit,
+                Event.Click => btn.click,
+                _ => btn.exit
+            };
+            
+            var dataRef = refs.childsDeactivateKeepSelfActiveData;
+            if (dataRef.activeChild == null) return;
+            
             var parent = dataRef.activeChild.transform.parent;
             for (int i = 0; i < parent.childCount; i++)
             {
@@ -241,9 +283,18 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
     
     void OnDestroy()
     {
+        if (btnHandle.IsAllocated) btnHandle.Free();
         sharedBtnState.Dispose(Allocator.Persistent);
         enterStateData.Dispose(Allocator.Persistent);
         clickStateData.Dispose(Allocator.Persistent);
+        exitStateData.Dispose(Allocator.Persistent);
+        
+        isHoveredPredicate.Dispose(Allocator.Persistent);
+        isNotHoveredPredicate.Dispose(Allocator.Persistent);
+        isClickedPredicate.Dispose(Allocator.Persistent);
+        
+        fsm.Dispose();
+
         if (enterLogicBuffer.IsCreated) enterLogicBuffer.Dispose();
         if (exitLogicBuffer.IsCreated) exitLogicBuffer.Dispose();
         if (clickLogicBuffer.IsCreated) clickLogicBuffer.Dispose();
