@@ -323,7 +323,7 @@ public class EnemyFunctionality : Functionalities<
 
 
             mutateCtx.attacking = true;
-            // Animation events will turn on and off the attacking bounds checker collider
+            // Animation btnEvents will turn on and off the attacking bounds checker collider
             cfg.animHandle.PlayThenOnEnd(bb.animator, EnemyConfig.EnemyAnims.Attack, EndAttackDelegateCached);
             bb.enemiesSoundConfig.Play(bb.audioSource, EnemiesSoundConfig.EnemiesSounds.Attack);
 
