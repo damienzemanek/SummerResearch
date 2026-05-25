@@ -45,7 +45,7 @@ public class LogicsTestSuite
         });
 
         // run multi-slot (should run both handles: 1 + 1 + 1)
-        logic.TryRun(ref exampleData);
+        logic.TryRunAllSequentially(ref exampleData);
 
         Assert.AreEqual(4f, exampleData.x);
     }
@@ -63,7 +63,7 @@ public class LogicsTestSuite
         var tickLogic = TickLogic<ExampleData>.Operation;
 
         // execute the tick logic pipe
-        tickLogic.TryRun(ref tickData);
+        tickLogic.TryRunAllSequentially(ref tickData);
 
         // check if core data was modified through the pipe
         Assert.AreEqual(11f, tickData.CoreData.x);

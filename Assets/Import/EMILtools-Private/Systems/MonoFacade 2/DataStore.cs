@@ -16,13 +16,41 @@ namespace DataArchitecture
             for(int i = 0; i < data.currentSize; i++)
             {
                 ref Data<T>.DataWrapper element = ref data.GetDataWrapper(i);
-                if(!element.active) continue;
-                logics.TryRun(ref element.DataVolatile);
+                if(!element.Active) continue;
+                logics.TryRunAllSequentially(ref element.DataVolatile);
             }
         }
     }
     
     
+    /// <summary>
+    /// Single Reference
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public unsafe struct DataSingle<T> where T : unmanaged
+    {
+        T* ptr;
+
+        public T* Ptr => ptr;
+        public ref T Value => ref *ptr;
+
+        public DataSingle(Allocator allocator)
+        {
+            ptr = (T*)UnsafeUtility.Malloc(
+                UnsafeUtility.SizeOf<T>(),
+                UnsafeUtility.AlignOf<T>(),
+                allocator);
+
+            *ptr = default;
+        }
+
+        public void Dispose(Allocator allocator)
+        {
+            if (ptr == null) return;
+            UnsafeUtility.Free(ptr, allocator);
+            ptr = null;
+        }
+    }
     
     /// <summary>
     /// What is this?
@@ -48,12 +76,13 @@ namespace DataArchitecture
         /// </summary>
         public unsafe struct DataWrapper
         {
-            internal bool active;
+            byte _active;
+            internal bool Active => _active == 1;
             T data;
             public DataWrapper() => throw new System.NotImplementedException("This struct is only a wrapper for the Data struct, and should not be initialized directly.");
             public DataWrapper(T getData)
             {
-                active = true;
+                _active = 1;
                 this.data = getData;
             }
 
@@ -72,7 +101,8 @@ namespace DataArchitecture
         }
         
         public int currentSize => nextIndex;
-        public bool active;
+        byte active;
+        public bool Active => active == 1;
         int nextIndex;
         UnsafeList<DataWrapper> data;
         
@@ -82,7 +112,7 @@ namespace DataArchitecture
         {
             nextIndex = 0;
             data = new UnsafeList<DataWrapper>(capacity, allocator);
-            active = true;
+            active = 1;
         }
 
         /// <summary>
@@ -112,7 +142,7 @@ namespace DataArchitecture
         public void ReAllocateInactive(int id, ref T newData)
         {
             if(id >= currentSize) throw new System.IndexOutOfRangeException($"Index {id} out of bounds. Data length is {currentSize}");
-            if(data[id].active) throw new System.IndexOutOfRangeException($"Index {id} Trying to reallocate an active element.");
+            if(data[id].Active) throw new System.IndexOutOfRangeException($"Index {id} Trying to reallocate an active element.");
             data[id] = new DataWrapper(newData);
         }
         
@@ -149,7 +179,7 @@ namespace DataArchitecture
             if (data.IsCreated)
             {
                 data.Dispose();
-                active = false;
+                active = 0;
             }
         }
     }

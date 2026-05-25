@@ -51,7 +51,7 @@ namespace ProSMLogic
     
         // concrete impementations
         // Deref pointer satisfies ref T param on TryRun
-        static void Run(TickData<TData>* data) => data->coreLogics.TryRun(ref data->CoreData);
+        static void Run(TickData<TData>* data) => data->coreLogics.TryRunAllSequentially(ref data->CoreData);
         static bool ShouldRun(TickData<TData>* data) => true;
     
         // Tick Logic (this specfici implementation) only has 1 operation

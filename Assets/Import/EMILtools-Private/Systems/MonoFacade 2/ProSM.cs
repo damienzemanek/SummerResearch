@@ -18,7 +18,8 @@ namespace ProceduralStateMachine
         const int ANY_TRANSITIONS_SIZE = 50;
         const int NOT_ENTERED_YET = -1;
 
-        public bool isInitialized;
+        public byte isInitialized;
+        public bool IsInitialized => isInitialized != 0;
         public int entryState;
         public int currentState;
         public int previousState;
@@ -34,7 +35,7 @@ namespace ProceduralStateMachine
         {
             states = new Data<StateData<TData>>(statesSize, Allocator.Persistent);
             anyTransitions = new Data<Transition>(ANY_TRANSITIONS_SIZE, Allocator.Persistent);
-            isInitialized = true;
+            isInitialized = 1;
             entryState = _entryState;
             currentState = NOT_ENTERED_YET; // Call Entry() to set this
         }
@@ -51,7 +52,7 @@ namespace ProceduralStateMachine
                 throw new ArgumentException($"Type '{typeof(TData).Name}' is not blittable. TData must be a blittable type to ensure safety in unmanaged memory operations.");
             
             // Prevent memory leaks (Input Validation)
-            if (fsm.layers.active) 
+            if (fsm.layers.Active) 
                 throw new InvalidOperationException("ProSM is already initialized. Dispose it before initializing again.");
     
             // Valid Layer Count (Input Validation)
@@ -79,7 +80,7 @@ namespace ProceduralStateMachine
             ref var layerData = ref fsm.layers.Get(layerIndex);
             
             // Layer not already initialized (Input Validation)
-            if(layerData.isInitialized) 
+            if(layerData.IsInitialized) 
                 throw new InvalidOperationException("Layer already initialized, use another index");
             
             layerData.enumTypeId = typeof(TStates).GetHashCode(); // Store type hash
@@ -110,7 +111,7 @@ namespace ProceduralStateMachine
             if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
             
-            var transition = new Transition(Unsafe.As<TStates, int>(ref to), ref predicate);
+            var transition = new Transition(Unsafe.As<TStates, short>(ref to), ref predicate);
             fsm.layers[layerIndex].anyTransitions.Allocate(ref transition, out int _);
         }
 
@@ -131,7 +132,7 @@ namespace ProceduralStateMachine
             if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
 
-            var transition = new Transition(toIndex, ref predicate);
+            var transition = new Transition((short)toIndex, ref predicate);
             fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
         }
         
@@ -203,11 +204,11 @@ namespace ProceduralStateMachine
         {
             //previous
             fsm.layers[layer].previousState = fsm.layers[layer].currentState;
-            fsm.layers[layer].states[fsm.layers[layer].currentState].OnExitState.TryRun(ref data);
+            fsm.layers[layer].states[fsm.layers[layer].currentState].OnExitState.TryRunAllSequentially(ref data);
             
             //next
             fsm.layers[layer].currentState = nextState;
-            fsm.layers[layer].states[nextState].OnEnterState.TryRun(ref data);
+            fsm.layers[layer].states[nextState].OnEnterState.TryRunAllSequentially(ref data);
         }
         
         
@@ -217,17 +218,17 @@ namespace ProceduralStateMachine
             where TData : unmanaged
         {
             // (Sequential Input Validation)
-            if (!fsm.layers.active || fsm.layers.currentSize == 0)
+            if (!fsm.layers.Active || fsm.layers.currentSize == 0)
                 throw new InvalidOperationException("ProSM Entry failed: No layers have been initialized. Call Initialize() and InitLayer() first.");
             
             
             for(int i = 0; i < fsm.layers.currentSize; i++)
             {
                 ref var layerData = ref fsm.layers.Get(i);
-                if(layerData.isInitialized == false) 
+                if(layerData.IsInitialized == false) 
                     throw new InvalidOperationException($"ProSM Entry failed: Layer {i} has not been initialized. Call InitLayer() before calling Entry().");
                 layerData.currentState = layerData.entryState;
-                fsm.layers[i].states[layerData.currentState].OnEnterState.TryRun(ref data);
+                fsm.layers[i].states[layerData.currentState].OnEnterState.TryRunAllSequentially(ref data);
                 // enter logic using StateLogics
             }
         }
@@ -242,7 +243,7 @@ namespace ProceduralStateMachine
             for (int i = 0; i < fsm.layers.currentSize; i++)
             {
                 var currentState = fsm.layers[i].states[fsm.layers[i].currentState];
-                currentState.OnUpdate.TryRun(ref tickData);
+                currentState.OnUpdate.TryRunAllSequentially(ref tickData);
             }
         }
 
@@ -255,7 +256,7 @@ namespace ProceduralStateMachine
             for (int i = 0; i < fsm.layers.currentSize; i++)
             {
                 var currentState = fsm.layers[i].states[fsm.layers[i].currentState];
-                currentState.OnFixedUpdate.TryRun(ref tickData);
+                currentState.OnFixedUpdate.TryRunAllSequentially(ref tickData);
             }
         }
 
@@ -268,7 +269,7 @@ namespace ProceduralStateMachine
             for (int i = 0; i < fsm.layers.currentSize; i++)
             {
                 var currentState = fsm.layers[i].states[fsm.layers[i].currentState];
-                currentState.OnLateUpdate.TryRun(ref tickData);
+                currentState.OnLateUpdate.TryRunAllSequentially(ref tickData);
             }
         }
     }
@@ -313,7 +314,7 @@ namespace ProceduralStateMachine
         
         public void Dispose()
         {
-            if (!layers.active)
+            if (!layers.Active)
             {
                 Debug.LogWarning("(IDEMPOTENT ACTION) ProSM Dispose called, but ProSM was not initialized or was already disposed. No action taken.");
                 return;

@@ -38,14 +38,14 @@ public class ProSMTestSuite : MonoBehaviour
 
         Assert.IsTrue(TestPredicate.IsCreated);
         Assert.AreEqual(2, exampleData.x);
-        Assert.IsTrue(fsm.layers.active);
-        Assert.IsTrue(fsm.layers[0].isInitialized);
-        Assert.IsTrue(fsm.layers[1].isInitialized);
+        Assert.IsTrue(fsm.layers.Active);
+        Assert.IsTrue(fsm.layers[0].IsInitialized);
+        Assert.IsTrue(fsm.layers[1].IsInitialized);
         Assert.AreEqual(3, fsm.layers[0].states.currentSize);
         Assert.AreEqual(3, fsm.layers[1].states.currentSize);
         
-        Assert.IsTrue(fsm.layers[0].states[0].transitions.active);
-        Assert.IsTrue(fsm.layers[1].states[0].transitions.active);
+        Assert.IsTrue(fsm.layers[0].states[0].transitions.Active);
+        Assert.IsTrue(fsm.layers[1].states[0].transitions.Active);
         
         fsm.Dispose();
     }
@@ -62,7 +62,7 @@ public class ProSMTestSuite : MonoBehaviour
         var TestPredicate = ExamplePredicates.IsGreaterThanOne();
         fsm.AddAnyTransition(0, TestLayerOne.L1S1, ref TestPredicate);
         
-        Assert.IsTrue(fsm.layers[0].anyTransitions.active);
+        Assert.IsTrue(fsm.layers[0].anyTransitions.Active);
         Assert.AreEqual(1, fsm.layers[0].anyTransitions.currentSize);
 
         fsm.Dispose();
@@ -80,7 +80,7 @@ public class ProSMTestSuite : MonoBehaviour
         var TestPredicate = ExamplePredicates.IsGreaterThanOne();
         fsm.AddDirectTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S2, ref TestPredicate);
         
-        Assert.IsTrue(fsm.layers[0].states[0].transitions.active);
+        Assert.IsTrue(fsm.layers[0].states[0].transitions.Active);
         Assert.AreEqual(1, fsm.layers[0].states[0].transitions.currentSize);
 
         fsm.Dispose();
@@ -304,9 +304,9 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.layers[0].states[0].OnLateUpdate = TickExampleLogics.LateUpdateLogics;
 
         // Execute the logics
-        fsm.layers[0].states[0].OnUpdate.TryRun(ref tickData);
-        fsm.layers[0].states[0].OnFixedUpdate.TryRun(ref tickData);
-        fsm.layers[0].states[0].OnLateUpdate.TryRun(ref tickData);
+        fsm.layers[0].states[0].OnUpdate.TryRunAllSequentially(ref tickData);
+        fsm.layers[0].states[0].OnFixedUpdate.TryRunAllSequentially(ref tickData);
+        fsm.layers[0].states[0].OnLateUpdate.TryRunAllSequentially(ref tickData);
 
         Assert.IsTrue(TickExampleLogics.update, "Update logic should have executed");
         Assert.IsTrue(TickExampleLogics.fixedUpdate, "FixedUpdate logic should have executed");
@@ -791,17 +791,17 @@ public class ProSMTestSuite : MonoBehaviour
         static void FixedUpdate(TickLogic<SomeInstanceLogic.SomeInstanceData>.TickData<SomeInstanceLogic.SomeInstanceData>* data) 
         {
             data->CoreData.x += data->deltaTime;
-            data->coreLogics.TryRun(ref data->CoreData);
+            data->coreLogics.TryRunAllSequentially(ref data->CoreData);
         }
-        static void LateUpdate(TickLogic<SomeInstanceLogic.SomeInstanceData>.TickData<SomeInstanceData>* data)
+        static void LateUpdate(TickLogic<SomeInstanceLogic.SomeInstanceData>.TickData<SomeInstanceLogic.SomeInstanceData>* data)
         {
             data->CoreData.x += data->deltaTime;
-            data->coreLogics.TryRun(ref data->CoreData);
+            data->coreLogics.TryRunAllSequentially(ref data->CoreData);
         }
         static void Update(TickLogic<SomeInstanceData>.TickData<SomeInstanceData>* data)
         {
             data->CoreData.x += data->deltaTime;
-            data->coreLogics.TryRun(ref data->CoreData);
+            data->coreLogics.TryRunAllSequentially(ref data->CoreData);
         }
         
         static bool ShouldRun(TickLogic<SomeInstanceData>.TickData<SomeInstanceData>* data) => true;

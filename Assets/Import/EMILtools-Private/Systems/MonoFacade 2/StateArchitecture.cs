@@ -14,10 +14,10 @@ namespace StateArchitecture
 
     public struct Transition
     {
-        public int to;
+        public short to;
         public Predicate condition;
         // mabye in the future make this a logic that does not have to pass in the predicate, but creates it here
-        public Transition(int _to, ref Predicate _condition)
+        public Transition(short _to, ref Predicate _condition)
         {
             to = _to;
             condition = _condition;
