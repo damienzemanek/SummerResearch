@@ -79,21 +79,15 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
 
         void InitValues()
         {
-            if(buttonBtnEvents.HasFlag(Exit))
-            {
+            if (buttonBtnEvents.HasFlag(Exit)) {
                 exitStateData.btnEventType = Exit;
-                exitStateData.sharedBtnStateData = sharedBtnState;
-            }
-            if(buttonBtnEvents.HasFlag(Enter))
-            {
+                exitStateData.managedBtn = sharedBtnState.ManagedBtn; }
+            if (buttonBtnEvents.HasFlag(Enter)) {
                 enterStateData.btnEventType = Enter;
-                enterStateData.sharedBtnStateData = sharedBtnState;
-            }
-            if(buttonBtnEvents.HasFlag(Click))
-            {
+                enterStateData.managedBtn = sharedBtnState.ManagedBtn; }
+            if (buttonBtnEvents.HasFlag(Click)) {
                 clickStateData.btnEventType = Click;
-                clickStateData.sharedBtnStateData = sharedBtnState;
-            }
+                clickStateData.managedBtn = sharedBtnState.ManagedBtn; }
             
             isHoveredPredicate = ButtonPredicates.IsHovered();
             isNotHoveredPredicate = ButtonPredicates.IsNotHovered();

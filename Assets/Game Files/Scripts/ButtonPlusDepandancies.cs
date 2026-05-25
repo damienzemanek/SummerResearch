@@ -218,8 +218,8 @@ public static class ButtonPlusDepandancies
             if(!dataRef.looping) dataRef.audioSource.PlayOneShot(dataRef.audioClip);
             else
             {
-                dataRef.audioSource.Play();
                 dataRef.audioSource.clip = dataRef.audioClip;
+                dataRef.audioSource.Play();
             }
         }
     }
