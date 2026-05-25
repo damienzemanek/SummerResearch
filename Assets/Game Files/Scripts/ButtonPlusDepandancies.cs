@@ -1,13 +1,10 @@
 using System;
-using System.Runtime.InteropServices;
 using DataArchitecture;
 using LogicArchitecture;
-using ProceduralStateMachine;
 using Sirenix.OdinInspector;
 using StateArchitecture;
 using UnityEngine;
 using UnityEngine.Events;
-using static ButtonPlus;
 
 public static class ButtonPlusDepandancies
 {
@@ -67,7 +64,7 @@ public static class ButtonPlusDepandancies
         public bool looping;
     }
     
-    public unsafe struct BtnData
+    public struct BtnData
     {
         public struct SharedBtnState
         {
@@ -75,7 +72,8 @@ public static class ButtonPlusDepandancies
             public byte isClicked;      public bool IsClicked => isClicked == 1;
             public BlittableManagedReference<ButtonPlus> ManagedBtn;
         }
-        public DataSingle<SharedBtnState> sharedSharedBtnStateData;
+        public BlittableManagedReference<ButtonPlus> managedBtn;
+        public ref SharedBtnState sharedBtnStateData => ref managedBtn.Target.sharedBtnState;
         public BtnEvent btnEventType;
     }
     
@@ -104,21 +102,21 @@ public static class ButtonPlusDepandancies
         static bool isHovered(void* ptr)
         {
             BtnData* data = (BtnData*)ptr;
-            return data->sharedSharedBtnStateData.GetVariable.IsHovered;
+            return data->sharedBtnStateData.IsHovered;
         }
         
         public static Predicate IsNotHovered() => new(&isNotHovered);
         static bool isNotHovered(void* ptr)
         {
             BtnData* data = (BtnData*)ptr;
-            return !data->sharedSharedBtnStateData.GetVariable.IsHovered;
+            return !data->sharedBtnStateData.IsHovered;
         }
         
         public static Predicate IsClicked() => new(&isClicked);
         static bool isClicked(void* ptr)
         {
             BtnData* data = (BtnData*)ptr;
-            return data->sharedSharedBtnStateData.GetVariable.IsClicked;
+            return data->sharedBtnStateData.IsClicked;
         }
     }
     
@@ -128,7 +126,7 @@ public static class ButtonPlusDepandancies
         static bool SetActiveShouldRun(BtnData* data) => true;
         static void SetActiveRun(BtnData* data)
         {
-            var btn = data->sharedSharedBtnStateData.GetVariable.ManagedBtn.Target;
+            var btn = data->sharedBtnStateData.ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,
@@ -144,7 +142,7 @@ public static class ButtonPlusDepandancies
         static bool DeactiveAllChildrenButKeepOAnectiveShouldRun(BtnData* data) => true;
         static void DeactiveAllChildrenButKeepOAnectiveRun(BtnData* data)
         {
-            var btn = data->sharedSharedBtnStateData.GetVariable.ManagedBtn.Target;
+            var btn = data->sharedBtnStateData.ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,
@@ -168,7 +166,7 @@ public static class ButtonPlusDepandancies
         static bool AnimateShouldRun(BtnData* data) => true;
         static void AnimateRun(BtnData* data)
         {
-            var btn = data->sharedSharedBtnStateData.GetVariable.ManagedBtn.Target;
+            var btn = data->sharedBtnStateData.ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,
@@ -186,7 +184,7 @@ public static class ButtonPlusDepandancies
         static bool BtnUnityEventShouldRun(BtnData* data) => true;
         static void BtnUnityEventRun(BtnData* data)
         {
-            var btn = data->sharedSharedBtnStateData.GetVariable.ManagedBtn.Target;
+            var btn = data->sharedBtnStateData.ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,
@@ -204,7 +202,7 @@ public static class ButtonPlusDepandancies
         static bool PlaySoundShouldRun(BtnData* data) => true;
         static void PlaySoundRun(BtnData* data)
         {
-            var btn = data->sharedSharedBtnStateData.GetVariable.ManagedBtn.Target;
+            var btn = data->sharedBtnStateData.ManagedBtn.Target;
             BtnReferences refs = data->btnEventType switch
             {
                 BtnEvent.Enter => btn.enterRefs,

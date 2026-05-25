@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LogicArchitecture;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace DataArchitecture
 {
@@ -46,35 +43,6 @@ namespace DataArchitecture
         }
     }
     
-    /// <summary>
-    /// Single Reference
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public unsafe struct DataSingle<T> where T : unmanaged
-    {
-        T* ptr;
-
-        public T* GetPtr => ptr;
-        public ref T GetVariable => ref *ptr;
-        public void SetVariable(ref T value) => *ptr = value;
-
-        public DataSingle(Allocator allocator)
-        {
-            ptr = (T*)UnsafeUtility.Malloc(
-                UnsafeUtility.SizeOf<T>(),
-                UnsafeUtility.AlignOf<T>(),
-                allocator);
-
-            *ptr = default;
-        }
-
-        public void Dispose(Allocator allocator)
-        {
-            if (ptr == null) return;
-            UnsafeUtility.Free(ptr, allocator);
-            ptr = null;
-        }
-    }
     
     /// <summary>
     /// What is this?
