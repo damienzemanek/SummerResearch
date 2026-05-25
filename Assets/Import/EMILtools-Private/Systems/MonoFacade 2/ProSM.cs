@@ -12,6 +12,8 @@ using UnityEngine;
 namespace ProceduralStateMachine
 {
     
+    
+    
     // Separate Data Layer
     public struct LayerData<TData> where TData : unmanaged // Just the Layer data
     {
@@ -274,6 +276,8 @@ namespace ProceduralStateMachine
         }
     }
     
+    
+    // To Implement: Make Predicate static on the static implementation level
     
 
     /// <summary>

@@ -23,16 +23,18 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
     {
         public GameObject activeChild;
     }
-
-    public struct SharedBtnState
-    {
-        public byte isHovered;      public bool IsHovered => isHovered == 1;
-        public byte isClicked;      public bool IsClicked => isClicked == 1;
-        public IntPtr buttonHandle;
-    }
+    
+    
     
     public unsafe struct BtnData
     {
+        public struct SharedBtnState
+        {
+            public byte isHovered;      public bool IsHovered => isHovered == 1;
+            public byte isClicked;      public bool IsClicked => isClicked == 1;
+            public IntPtr buttonHandle;
+        }
+        
         public SharedBtnState* sharedSharedBtnState;
         public Event eventType;
     }
@@ -105,7 +107,7 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
     DataSingle<BtnData> enterStateData = new(Allocator.Persistent);
     DataSingle<BtnData> clickStateData = new(Allocator.Persistent);
     DataSingle<BtnData> exitStateData = new(Allocator.Persistent);
-    DataSingle<SharedBtnState> sharedBtnState = new(Allocator.Persistent);
+    DataSingle<BtnData.SharedBtnState> sharedBtnState = new(Allocator.Persistent);
     
     DataSingle<Predicate> isHoveredPredicate = new(Allocator.Persistent);
     DataSingle<Predicate> isNotHoveredPredicate = new(Allocator.Persistent);
@@ -240,6 +242,7 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
     public unsafe static class ButtonPlusOperations
     {
         public static LogicOperation<BtnData> SetActive = new(&SetActiveRun, &SetActiveShouldRun);
+        static bool SetActiveShouldRun(BtnData* data) => true;
         static void SetActiveRun(BtnData* data)
         {
             var btn = (ButtonPlusV2)GCHandle.FromIntPtr(data->sharedSharedBtnState->buttonHandle).Target;
@@ -253,10 +256,9 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
             if (refs.SetActiveData.target != null)
                 refs.SetActiveData.target.SetActive(refs.SetActiveData.active);
         }
-        static bool SetActiveShouldRun(BtnData* data) => true;
         
         public static LogicOperation<BtnData> DeactiveAllChildrenButKeepOAnective = new(&DeactiveAllChildrenButKeepOAnectiveRun, &DeactiveAllChildrenButKeepOAnectiveShouldRun);
-
+        static bool DeactiveAllChildrenButKeepOAnectiveShouldRun(BtnData* data) => true;
         static void DeactiveAllChildrenButKeepOAnectiveRun(BtnData* data)
         {
             var btn = (ButtonPlusV2)GCHandle.FromIntPtr(data->sharedSharedBtnState->buttonHandle).Target;
@@ -278,7 +280,6 @@ public class ButtonPlusV2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHa
                 child.gameObject.SetActive(child.gameObject == dataRef.activeChild);
             }
         }
-        static bool DeactiveAllChildrenButKeepOAnectiveShouldRun(BtnData* data) => true;
     }
     
     void OnDestroy()
