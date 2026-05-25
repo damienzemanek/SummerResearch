@@ -1,11 +1,11 @@
 using System;
 using System.Runtime.InteropServices;
-using LogicArchitecture;
+using ProSM.LogicArchitecture;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-namespace DataArchitecture
+namespace ProSM.DataArchitecture
 {
 
     public static class Batcher

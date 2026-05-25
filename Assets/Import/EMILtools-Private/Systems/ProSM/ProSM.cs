@@ -2,15 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using DataArchitecture;
-using LogicArchitecture;
-using ProSMLogic;
-using StateArchitecture;
+using ProSM.DataArchitecture;
+using ProSM.LogicArchitecture;
+using ProSM.StateArchitecture;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
-namespace ProceduralStateMachine
+namespace ProSM
 {
     
     

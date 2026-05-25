@@ -1,6 +1,6 @@
 using NUnit.Framework;
-using LogicArchitecture;
-using LogicExamples;
+using ProSM.LogicArchitecture;
+using ProSM.LogicExamples;
 
 public class LogicOperationTestSuite
 {

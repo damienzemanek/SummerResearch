@@ -1,4 +1,4 @@
-using LogicArchitecture;
+using ProSM.LogicArchitecture;
 
 ///notes:
 /// pointer validity depends on where memory lives and how runtime defines safety, not just whether it compiles
@@ -6,7 +6,7 @@ using LogicArchitecture;
 /// Static fields init top-to-bottom before static constructuer body runs
 
 
-namespace LogicExamples
+namespace ProSM.LogicExamples
 {
     public static unsafe class ExampleLogic 
     {

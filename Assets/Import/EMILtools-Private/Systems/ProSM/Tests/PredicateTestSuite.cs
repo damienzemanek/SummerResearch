@@ -1,6 +1,6 @@
 using System;
 using NUnit.Framework;
-using StateArchitecture;
+using ProSM.StateArchitecture;
 using UnityEngine;
 
 public class PredicateTestSuite : MonoBehaviour

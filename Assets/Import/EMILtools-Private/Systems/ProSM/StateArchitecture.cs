@@ -1,11 +1,11 @@
-using DataArchitecture;
-using LogicArchitecture;
-using StateArchitecture;
+using System;
+using ProSM.DataArchitecture;
+using ProSM.LogicArchitecture;
 using Unity.Collections;
 
-namespace ProSMLogic
+namespace ProSM.StateArchitecture
 {
-
+    
     public struct StateData<TData> where TData : unmanaged
     {
         const int TRANSITIONS_SIZE = 50;
@@ -59,4 +59,53 @@ namespace ProSMLogic
         static readonly LogicOperation<TickData<TData>> TickOperation = new(&Run, &ShouldRun); 
         public static readonly Logics<TickData<TData>> Operation = new (ref TickOperation);
     }
+    
+
+    public struct Transition
+    {
+        public short to;
+        public float duration;
+        public Predicate condition;
+        // mabye in the future make this a logic that does not have to pass in the predicate, but creates it here
+        public Transition(short _to, ref Predicate _condition, float _duration = 0f) 
+        {
+            to = _to;
+            condition = _condition;
+            duration = _duration;
+        }
+    }
+
+
+
+    /// <summary>
+    /// Delegate* are blittable
+    /// </summary>
+    public unsafe struct Predicate
+    {
+        //      Subscribe using this delegate signature:
+        //      bool IsSomething(ref T data);
+
+        // 1st: void* is the delegate
+        // 2nd: bool is the result
+        internal delegate*<void*, bool> evaluate;
+        public bool IsCreated => evaluate != null;
+        public Predicate(delegate*<void*, bool> _evaluate) => evaluate = _evaluate;
+    }
+
+    public static unsafe class PredicateExtensions
+    {
+        public static bool Evaluate<T>(this ref Predicate predicate, ref T data) where T : unmanaged
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (predicate.evaluate == null) throw new NullReferenceException("Predicate not initialized");
+#endif
+            fixed(void* ptr = &data) return predicate.evaluate(ptr);
+        }
+    }
+    
+    
+
+
+
+
 }

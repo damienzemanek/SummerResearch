@@ -1,11 +1,11 @@
 {
-    "name": "MonoFacade2Tests",
+    "name": "ProSMTests",
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "MonoFacade2",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "ProSM"
     ],
     "includePlatforms": [
         "Editor"

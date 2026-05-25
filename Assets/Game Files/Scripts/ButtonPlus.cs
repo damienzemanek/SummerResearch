@@ -1,8 +1,8 @@
-using DataArchitecture;
-using LogicArchitecture;
-using ProceduralStateMachine;
+using ProSM.DataArchitecture;
+using ProSM.LogicArchitecture;
+using ProSM.StateArchitecture;
+using ProSM;
 using Sirenix.OdinInspector;
-using StateArchitecture;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;

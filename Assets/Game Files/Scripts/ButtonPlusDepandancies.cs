@@ -1,8 +1,8 @@
 using System;
-using DataArchitecture;
-using LogicArchitecture;
+using ProSM.DataArchitecture;
+using ProSM.LogicArchitecture;
+using ProSM.StateArchitecture;
 using Sirenix.OdinInspector;
-using StateArchitecture;
 using UnityEngine;
 using UnityEngine.Events;
 

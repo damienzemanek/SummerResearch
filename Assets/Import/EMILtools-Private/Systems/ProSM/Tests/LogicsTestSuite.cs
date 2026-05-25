@@ -1,12 +1,12 @@
 using System;
 using NUnit.Framework;
-using LogicArchitecture;
-using LogicExamples;
-using ProSMLogic;
-using StateArchitecture;
+using ProSM.LogicArchitecture;
+using ProSM.LogicExamples;
+using ProSM;
+using ProSM.StateArchitecture;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using static LogicExamples.ExampleLogic;
+using static ProSM.LogicExamples.ExampleLogic;
 
 public class LogicsTestSuite
 {
