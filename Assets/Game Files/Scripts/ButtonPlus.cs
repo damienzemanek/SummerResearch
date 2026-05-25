@@ -42,7 +42,7 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
 
     void Awake()
     {
-        sharedBtnState.Value.ManagedBtn = BlittableManagedReference<ButtonPlus>.Allocate(this);
+        sharedBtnState.GetVariable.ManagedBtn = BlittableManagedReference<ButtonPlus>.Allocate(this);
 
         fsm.Initialize(1);
         fsm.InitLayer<BtnStates, BtnData>(0);
@@ -50,7 +50,7 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
         StorePtrs();
         AssignLogics();
         EstablishTransitions();
-        fsm.Entry(ref exitStateData.Value);
+        fsm.Entry(ref exitStateData.GetVariable);
         
         
         void PackLogics()
@@ -75,22 +75,22 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
             }
         }
 
-        unsafe void StorePtrs()
+        void StorePtrs()
         {
             if(buttonBtnEvents.HasFlag(Exit))
             {
-                exitStateData.Value.btnEventType = Exit;
-                exitStateData.Value.sharedSharedBtnState = sharedBtnState.Ptr;
+                exitStateData.GetVariable.btnEventType = Exit;
+                exitStateData.GetVariable.sharedSharedBtnStateData.SetVariable(ref sharedBtnState.GetVariable);
             }
             if(buttonBtnEvents.HasFlag(Enter))
             {
-                enterStateData.Value.btnEventType = Enter;
-                enterStateData.Value.sharedSharedBtnState = sharedBtnState.Ptr;
+                enterStateData.GetVariable.btnEventType = Enter;
+                enterStateData.GetVariable.sharedSharedBtnStateData.SetVariable(ref sharedBtnState.GetVariable);
             }
             if(buttonBtnEvents.HasFlag(Click))
             {
-                clickStateData.Value.btnEventType = Click;
-                clickStateData.Value.sharedSharedBtnState = sharedBtnState.Ptr;
+                clickStateData.GetVariable.btnEventType = Click;
+                clickStateData.GetVariable.sharedSharedBtnStateData.SetVariable(ref sharedBtnState.GetVariable);
             }
         }
 
@@ -104,14 +104,14 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
 
         void EstablishTransitions()
         {
-            isHoveredPredicate.Value = ButtonPredicates.IsHovered();
-            isNotHoveredPredicate.Value = ButtonPredicates.IsNotHovered();
-            isClickedPredicate.Value = ButtonPredicates.IsClicked();
+            isHoveredPredicate.GetVariable = ButtonPredicates.IsHovered();
+            isNotHoveredPredicate.GetVariable = ButtonPredicates.IsNotHovered();
+            isClickedPredicate.GetVariable = ButtonPredicates.IsClicked();
             
-            fsm.AddDirectTransition(0, BtnStates.Default, BtnStates.Hover, ref isHoveredPredicate.Value);
-            fsm.AddDirectTransition(0, BtnStates.Hover, BtnStates.Default, ref isNotHoveredPredicate.Value);
-            fsm.AddDirectTransition(0, BtnStates.Hover, BtnStates.Pressed, ref isClickedPredicate.Value);
-            fsm.AddDirectTransition(0, BtnStates.Pressed, BtnStates.Default, ref isNotHoveredPredicate.Value);
+            fsm.AddDirectTransition(0, BtnStates.Default, BtnStates.Hover, ref isHoveredPredicate.GetVariable);
+            fsm.AddDirectTransition(0, BtnStates.Hover, BtnStates.Default, ref isNotHoveredPredicate.GetVariable);
+            fsm.AddDirectTransition(0, BtnStates.Hover, BtnStates.Pressed, ref isClickedPredicate.GetVariable);
+            fsm.AddDirectTransition(0, BtnStates.Pressed, BtnStates.Default, ref isNotHoveredPredicate.GetVariable);
             
             //fsm.AddDirectTimedTransition(0, BtnStates.Pressed, BtnStates.Default, 0.5f);
 
@@ -119,29 +119,29 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
     }
     
 
-    public unsafe void OnPointerEnter(PointerEventData eventData)
+    public void OnPointerEnter(PointerEventData eventData)
     {
-        enterStateData.Value.sharedSharedBtnState->isHovered = 1;
-        fsm.TryPollTransitions(ref enterStateData.Value);
+        enterStateData.GetVariable.sharedSharedBtnStateData.GetVariable.isHovered = 1;
+        fsm.TryPollTransitions(ref enterStateData.GetVariable);
     }
     
-    public unsafe void OnPointerExit(PointerEventData eventData)    
+    public void OnPointerExit(PointerEventData eventData)    
     {
-        exitStateData.Value.sharedSharedBtnState->isHovered = 0;
-        clickStateData.Value.sharedSharedBtnState->isClicked = 0;
-        fsm.TryPollTransitions(ref exitStateData.Value);   
+        exitStateData.GetVariable.sharedSharedBtnStateData.GetVariable.isHovered = 0;
+        clickStateData.GetVariable.sharedSharedBtnStateData.GetVariable.isClicked = 0;
+        fsm.TryPollTransitions(ref exitStateData.GetVariable);   
     }
-    public unsafe void OnPointerClick(PointerEventData eventData)          
+    public void OnPointerClick(PointerEventData eventData)          
     {                                                      
-        clickStateData.Value.sharedSharedBtnState->isClicked = 1;
-        fsm.TryPollTransitions(ref clickStateData.Value);  
-        clickStateData.Value.sharedSharedBtnState->isClicked = 0;
+        clickStateData.GetVariable.sharedSharedBtnStateData.GetVariable.isClicked = 1;
+        fsm.TryPollTransitions(ref clickStateData.GetVariable);  
+        clickStateData.GetVariable.sharedSharedBtnStateData.GetVariable.isClicked = 0;
     }                                                                      
     
     
     void OnDestroy()
     {
-        sharedBtnState.Value.ManagedBtn.Free();
+        sharedBtnState.GetVariable.ManagedBtn.Free();
         sharedBtnState.Dispose(Allocator.Persistent);
         enterStateData.Dispose(Allocator.Persistent);
         clickStateData.Dispose(Allocator.Persistent);

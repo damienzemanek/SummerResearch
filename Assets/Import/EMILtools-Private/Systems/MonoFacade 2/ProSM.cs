@@ -12,24 +12,7 @@ using UnityEngine;
 
 namespace ProceduralStateMachine
 {
-
-    public struct BlittableManagedReference<T> where T : class
-    {
-        IntPtr Handle;
-        readonly bool IsAllocated => Handle != IntPtr.Zero;
-        public static BlittableManagedReference<T> Allocate(T target) => new() { Handle = GCHandle.ToIntPtr(GCHandle.Alloc(target)) };
-        public readonly T Target
-        {
-            get { if (!IsAllocated) throw new InvalidOperationException("The managed reference has not been allocated or has already been Freed");
-                return (T)((GCHandle)Handle).Target; }
-        }
-        public void Free()
-        {
-            if (Handle == IntPtr.Zero) return;
-            ((GCHandle)Handle).Free();
-            Handle = IntPtr.Zero;
-        }
-    }
+    
     
     // Separate Data Layer
     public struct LayerData<TData> where TData : unmanaged // Just the Layer data

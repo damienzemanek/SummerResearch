@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LogicArchitecture;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -22,6 +24,27 @@ namespace DataArchitecture
         }
     }
     
+    /// <summary>
+    /// Use when you need to mutate managed references in an unmanaged or unsafe context
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public struct BlittableManagedReference<T> where T : class
+    {
+        IntPtr Handle;
+        readonly bool IsAllocated => Handle != IntPtr.Zero;
+        public static BlittableManagedReference<T> Allocate(T target) => new() { Handle = GCHandle.ToIntPtr(GCHandle.Alloc(target)) };
+        public readonly T Target
+        {
+            get { if (!IsAllocated) throw new InvalidOperationException("The managed reference has not been allocated or has already been Freed");
+                return (T)((GCHandle)Handle).Target; }
+        }
+        public void Free()
+        {
+            if (Handle == IntPtr.Zero) return;
+            ((GCHandle)Handle).Free();
+            Handle = IntPtr.Zero;
+        }
+    }
     
     /// <summary>
     /// Single Reference
@@ -31,8 +54,9 @@ namespace DataArchitecture
     {
         T* ptr;
 
-        public T* Ptr => ptr;
-        public ref T Value => ref *ptr;
+        public T* GetPtr => ptr;
+        public ref T GetVariable => ref *ptr;
+        public void SetVariable(ref T value) => *ptr = value;
 
         public DataSingle(Allocator allocator)
         {

@@ -29,7 +29,8 @@ namespace LogicExamples
         // 4 LOGICS CONTAINING OPERATION(S)
         // - Add `Logics` to your ProSM, composed of `LogicOperation`s
         // (!) Not all `Logics` classes will have an OperationLogics handle (!)
-        //   - Logics will be composed of many different operatiuons from seperate static Logic classes
+        //   - Logics will be composed of many different operations from seperate static Logic classes
+        // (!) `Logics` can be instanced to create multiple variations, they do not need to be static, but it is preferred
         public static readonly Logics<ExampleData> OperationLogics = new(ref Operation);
     }
 }
