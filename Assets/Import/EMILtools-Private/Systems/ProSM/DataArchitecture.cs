@@ -14,12 +14,22 @@ namespace ProSM.DataArchitecture
         {
             for(int i = 0; i < data.currentSize; i++)
             {
-                ref Data<T>.DataWrapper element = ref data.GetDataWrapper(i);
+                ref Data<T>.DataWrapper element = ref data.GetWrapper(i);
                 if(!element.Active) continue;
                 logics.TryRunAllSequentially(ref element.DataVolatile);
             }
         }
     }
+    
+    public struct ByteBool
+    {
+        byte value;
+        bool active => value != 0;
+        public void Set(bool _value) => value = (byte)(_value ? 1 : 0);
+        public static implicit operator bool(ByteBool b) => b.active;
+        public static implicit operator ByteBool(bool b) => new ByteBool { value = (byte)(b ? 1 : 0) };
+    }
+
     
     /// <summary>
     /// Use when you need to mutate managed references in an unmanaged or unsafe context
@@ -68,13 +78,13 @@ namespace ProSM.DataArchitecture
         /// </summary>
         public unsafe struct DataWrapper
         {
-            byte _active;
-            internal bool Active => _active == 1;
+            public ByteBool Active;
             T data;
             public DataWrapper() => throw new System.NotImplementedException("This struct is only a wrapper for the Data struct, and should not be initialized directly.");
             public DataWrapper(T getData)
             {
-                _active = 1;
+                Active = new ByteBool();
+                Active.Set(true);
                 this.data = getData;
             }
 
@@ -92,9 +102,9 @@ namespace ProSM.DataArchitecture
             }
         }
         
+        
         public int currentSize => nextIndex;
-        byte active;
-        public bool Active => active == 1;
+        public ByteBool Active;
         int nextIndex;
         UnsafeList<DataWrapper> data;
         
@@ -104,7 +114,8 @@ namespace ProSM.DataArchitecture
         {
             nextIndex = 0;
             data = new UnsafeList<DataWrapper>(capacity, allocator);
-            active = 1;
+            Active = new ByteBool();
+            Active.Set(true);
         }
 
         /// <summary>
@@ -146,7 +157,7 @@ namespace ProSM.DataArchitecture
         /// <param name="id"></param>
         /// <returns></returns>
         /// <exception cref="IndexOutOfRangeException"></exception>
-        public ref DataWrapper GetDataWrapper(int id)
+        public ref DataWrapper GetWrapper(int id)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if ((uint)id >= (uint)currentSize) throw new System.IndexOutOfRangeException($"Index {id} out of bounds. Data length is {data.Length}");
@@ -161,7 +172,7 @@ namespace ProSM.DataArchitecture
         /// <returns></returns>
         public ref T Get(int id)
         {
-            ref DataWrapper element = ref GetDataWrapper(id);
+            ref DataWrapper element = ref GetWrapper(id);
             return ref element.DataVolatile;
         }
         
@@ -171,7 +182,7 @@ namespace ProSM.DataArchitecture
             if (data.IsCreated)
             {
                 data.Dispose();
-                active = 0;
+                Active.Set(false);
             }
         }
     }

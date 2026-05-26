@@ -80,7 +80,7 @@ namespace ProSM.LogicArchitecture
         public void TryRunAllSequentially(ref T data)
         {
             for (int i = 0; i < count; i++)
-                if (operations[i].ShouldRun(data))
+                if (operations[i].ShouldRun(in data))
                     operations[i].Run(ref data);
         }
         
@@ -93,7 +93,7 @@ namespace ProSM.LogicArchitecture
         public void TryRun(ref T data, int index)
         {
             if (index < 0 || index >= count) throw new ArgumentOutOfRangeException(nameof(index), "Index out of range");
-            if (operations[index].ShouldRun(data))
+            if (operations[index].ShouldRun(in data))
                 operations[index].Run(ref data);
         }
     }
