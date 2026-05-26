@@ -1,7 +1,7 @@
 using System;
-using ProSM.DataArchitecture;
-using ProSM.LogicArchitecture;
-using ProSM.StateArchitecture;
+using ProArchitecture.Data;
+using ProArchitecture.Logic;
+using ProArchitecture.Predicates;
 using Unity.Collections;
 using UnityEngine;
 

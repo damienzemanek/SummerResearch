@@ -3,10 +3,9 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace ProSM.LogicArchitecture
+namespace ProArchitecture.Logic
 {
-
-
+    
     public static unsafe class NativeListExtensions
     {
         public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ref NativeList<T> list) where T : unmanaged => new(list.GetUnsafeReadOnlyPtr(), list.Length);
@@ -97,6 +96,34 @@ namespace ProSM.LogicArchitecture
             if (operations[index].ShouldRun(in data))
                 operations[index].Run(ref data);
         }
+    }
+    
+    public static unsafe class TickLogic<TData> where TData : unmanaged
+    {
+        public struct TickLogicData<TData> where TData : unmanaged
+        {
+            public float deltaTime;
+            readonly Logics<TData>* coreLogics;
+            public ref Logics<TData> CoreLogics => ref *coreLogics;
+            readonly TData* coreData;
+            public ref TData CoreData => ref *coreData;
+            public TickLogicData(float _deltaTime, ref Logics<TData> _coreLogics, ref TData _coreData)
+            {
+                deltaTime = _deltaTime;
+                coreLogics = (Logics<TData>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _coreLogics);
+                coreData = (TData*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _coreData);
+            }
+        }
+    
+        // concrete impementations
+        // Deref pointer satisfies ref T param on TryRun
+        static void Run(TickLogicData<TData>* data) => data->CoreLogics.TryRunAllSequentially(ref data->CoreData);
+        static bool ShouldRun(TickLogicData<TData>* data) => true;
+    
+        // Tick Logic (this specfici implementation) only has 1 operation
+        // When used in state logic, it will be added as an operation ITSELF to another Logics
+        static readonly LogicOperation<TickLogicData<TData>> TickOperation = new(&Run, &ShouldRun); 
+        public static readonly Logics<TickLogicData<TData>> TickLogics = new (ref TickOperation);
     }
 }
 

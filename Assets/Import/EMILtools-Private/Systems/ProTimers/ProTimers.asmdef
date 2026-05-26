@@ -5,7 +5,8 @@
         "Unity.Collections",
         "Unity.Collections.BurstCompatibilityGen",
         "Unity.Mathematics",
-        "ProSM"
+        "ProSM",
+        "ProArchitecture"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

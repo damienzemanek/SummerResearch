@@ -1,12 +1,10 @@
 {
-    "name": "UXUI",
-    "rootNamespace": "EMILtools",
+    "name": "ProArchitecture",
+    "rootNamespace": "",
     "references": [
-        "GUID:616e87fce639755479455bc5a9375e4a",
-        "GUID:39f47b00cd3502043a4c8712cbdbf014",
         "GUID:e0cd26848372d4e5c891c569017e11f1",
         "GUID:4f5c0c83dfd6a0743834baba2b4de79e",
-        "GUID:ef4fbe82031a2cf419fac6b6a20bc8c1"
+        "GUID:d8b63aba1907145bea998dd612889d6b"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

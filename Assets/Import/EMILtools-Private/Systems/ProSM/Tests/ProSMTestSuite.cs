@@ -1,11 +1,10 @@
 using System;
-using ProSM.LogicArchitecture;
-using ProSM.LogicExamples;
-using ProSM.StateArchitecture;
+using ProArchitecture.Logic;
+using ProArchitecture.Predicates;
 using NUnit.Framework;
 using ProSM;
 using UnityEngine;
-using static ProSM.LogicExamples.ExampleLogic;
+using static ProArchitecture.Logic.ExampleLogic;
 using static ProSMTestSuite.SomeInstanceLogic;
 
 public class ProSMTestSuite : MonoBehaviour

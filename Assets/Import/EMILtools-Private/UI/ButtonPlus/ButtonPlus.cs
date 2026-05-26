@@ -1,6 +1,6 @@
-using ProSM.DataArchitecture;
-using ProSM.LogicArchitecture;
-using ProSM.StateArchitecture;
+using ProArchitecture.Data;
+using ProArchitecture.Logic;
+using ProArchitecture.Predicates;
 using ProSM;
 using Sirenix.OdinInspector;
 using Unity.Collections;

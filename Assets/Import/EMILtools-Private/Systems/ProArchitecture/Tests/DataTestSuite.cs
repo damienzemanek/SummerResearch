@@ -1,8 +1,8 @@
 using System;
-using ProSM.DataArchitecture;
 using NUnit.Framework;
+using ProArchitecture.Data;
 using Unity.Collections;
-using static ProSM.LogicExamples.ExampleLogic;
+using static ProArchitecture.Logic.ExampleLogic;
 
 
 public class DataTestSuite

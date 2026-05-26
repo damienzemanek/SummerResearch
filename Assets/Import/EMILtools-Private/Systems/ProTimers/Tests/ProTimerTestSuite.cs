@@ -1,11 +1,11 @@
 using System;
 using NUnit.Framework;
-using ProSM.DataArchitecture;
+using ProArchitecture.Data;
+using ProArchitecture.Logic;
 using Unity.Collections;
 using UnityEngine;
 using ProTimers;
 using Unity.Collections.LowLevel.Unsafe;
-using ProSM.LogicArchitecture;
 
 public class ProTimerTestSuite
 {
