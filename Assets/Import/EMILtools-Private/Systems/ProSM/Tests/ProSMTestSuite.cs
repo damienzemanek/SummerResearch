@@ -289,11 +289,11 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.Entry(ref exampleData);
 
         // TickExampleLogics already has the Logics handles pre-initialized with stable pointers.
-        // We can just use any stable pointer for the test TickData.
+        // We can just use any stable pointer for the test TickLogicData.
         
-        var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(
+        var tickData = new TickLogic<ExampleData>.TickLogicData<ExampleData>(
             _deltaTime: 0.1f,
-            _coreLogics: ExampleLogic.OperationLogics,
+            _coreLogics: ref ExampleLogic.OperationLogics,
             ref exampleData);
         
         TickExampleLogics.Reset();
@@ -326,24 +326,24 @@ public class ProSMTestSuite : MonoBehaviour
             fixedUpdate = false;
         }
         
-        static void FixedUpdate(TickLogic<ExampleData>.TickData<ExampleData>* data) => fixedUpdate = true;
-        static void LateUpdate(TickLogic<ExampleData>.TickData<ExampleData>* data) => lateUpdate = true;
-        static void Update(TickLogic<ExampleData>.TickData<ExampleData>* data) => update = true;
-        static bool ShouldRun(TickLogic<ExampleData>.TickData<ExampleData>* data) => true;
+        static void FixedUpdate(TickLogic<ExampleData>.TickLogicData<ExampleData>* data) => fixedUpdate = true;
+        static void LateUpdate(TickLogic<ExampleData>.TickLogicData<ExampleData>* data) => lateUpdate = true;
+        static void Update(TickLogic<ExampleData>.TickLogicData<ExampleData>* data) => update = true;
+        static bool ShouldRun(TickLogic<ExampleData>.TickLogicData<ExampleData>* data) => true;
 
-        public static readonly LogicOperation<TickLogic<ExampleData>.TickData<ExampleData>> UpdateOp = new(&Update, &ShouldRun);
-        public static readonly LogicOperation<TickLogic<ExampleData>.TickData<ExampleData>> LateUpdateOp = new(&LateUpdate, &ShouldRun);
-        public static readonly LogicOperation<TickLogic<ExampleData>.TickData<ExampleData>> FixedUpdateOp = new(&FixedUpdate, &ShouldRun);
+        public static readonly LogicOperation<TickLogic<ExampleData>.TickLogicData<ExampleData>> UpdateOp = new(&Update, &ShouldRun);
+        public static readonly LogicOperation<TickLogic<ExampleData>.TickLogicData<ExampleData>> LateUpdateOp = new(&LateUpdate, &ShouldRun);
+        public static readonly LogicOperation<TickLogic<ExampleData>.TickLogicData<ExampleData>> FixedUpdateOp = new(&FixedUpdate, &ShouldRun);
 
-        public static readonly Logics<TickLogic<ExampleData>.TickData<ExampleData>> UpdateLogics;
-        public static readonly Logics<TickLogic<ExampleData>.TickData<ExampleData>> FixedUpdateLogics;
-        public static readonly Logics<TickLogic<ExampleData>.TickData<ExampleData>> LateUpdateLogics;
+        public static readonly Logics<TickLogic<ExampleData>.TickLogicData<ExampleData>> UpdateLogics;
+        public static readonly Logics<TickLogic<ExampleData>.TickLogicData<ExampleData>> FixedUpdateLogics;
+        public static readonly Logics<TickLogic<ExampleData>.TickLogicData<ExampleData>> LateUpdateLogics;
 
         static TickExampleLogics()
         {
-            UpdateLogics = new Logics<TickLogic<ExampleData>.TickData<ExampleData>>(ref UpdateOp);
-            FixedUpdateLogics = new Logics<TickLogic<ExampleData>.TickData<ExampleData>>(ref FixedUpdateOp);
-            LateUpdateLogics = new Logics<TickLogic<ExampleData>.TickData<ExampleData>>(ref LateUpdateOp);
+            UpdateLogics = new Logics<TickLogic<ExampleData>.TickLogicData<ExampleData>>(ref UpdateOp);
+            FixedUpdateLogics = new Logics<TickLogic<ExampleData>.TickLogicData<ExampleData>>(ref FixedUpdateOp);
+            LateUpdateLogics = new Logics<TickLogic<ExampleData>.TickLogicData<ExampleData>>(ref LateUpdateOp);
         }
         
     }
@@ -787,37 +787,37 @@ public class ProSMTestSuite : MonoBehaviour
     /// </summary>
     public static unsafe class TickExampleLogicsNaiveImplementation
     {
-        static void FixedUpdate(TickLogic<SomeInstanceLogic.SomeInstanceData>.TickData<SomeInstanceLogic.SomeInstanceData>* data) 
+        static void FixedUpdate(TickLogic<SomeInstanceLogic.SomeInstanceData>.TickLogicData<SomeInstanceLogic.SomeInstanceData>* data) 
         {
             data->CoreData.x += data->deltaTime;
-            data->coreLogics.TryRunAllSequentially(ref data->CoreData);
+            data->CoreLogics.TryRunAllSequentially(ref data->CoreData);
         }
-        static void LateUpdate(TickLogic<SomeInstanceLogic.SomeInstanceData>.TickData<SomeInstanceLogic.SomeInstanceData>* data)
+        static void LateUpdate(TickLogic<SomeInstanceLogic.SomeInstanceData>.TickLogicData<SomeInstanceLogic.SomeInstanceData>* data)
         {
             data->CoreData.x += data->deltaTime;
-            data->coreLogics.TryRunAllSequentially(ref data->CoreData);
+            data->CoreLogics.TryRunAllSequentially(ref data->CoreData);
         }
-        static void Update(TickLogic<SomeInstanceData>.TickData<SomeInstanceData>* data)
+        static void Update(TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>* data)
         {
             data->CoreData.x += data->deltaTime;
-            data->coreLogics.TryRunAllSequentially(ref data->CoreData);
+            data->CoreLogics.TryRunAllSequentially(ref data->CoreData);
         }
         
-        static bool ShouldRun(TickLogic<SomeInstanceData>.TickData<SomeInstanceData>* data) => true;
+        static bool ShouldRun(TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>* data) => true;
 
-        public static readonly LogicOperation<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> UpdateOp = new(&Update, &ShouldRun);
-        public static readonly LogicOperation<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> LateUpdateOp = new(&LateUpdate, &ShouldRun);
-        public static readonly LogicOperation<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> FixedUpdateOp = new(&FixedUpdate, &ShouldRun);
+        public static readonly LogicOperation<TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>> UpdateOp = new(&Update, &ShouldRun);
+        public static readonly LogicOperation<TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>> LateUpdateOp = new(&LateUpdate, &ShouldRun);
+        public static readonly LogicOperation<TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>> FixedUpdateOp = new(&FixedUpdate, &ShouldRun);
 
-        public static readonly Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> UpdateLogics;
-        public static readonly Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> FixedUpdateLogics;
-        public static readonly Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>> LateUpdateLogics;
+        public static readonly Logics<TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>> UpdateLogics;
+        public static readonly Logics<TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>> FixedUpdateLogics;
+        public static readonly Logics<TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>> LateUpdateLogics;
 
         static TickExampleLogicsNaiveImplementation()
         {
-            UpdateLogics = new Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>>(ref UpdateOp);
-            FixedUpdateLogics = new Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>>(ref FixedUpdateOp);
-            LateUpdateLogics = new Logics<TickLogic<SomeInstanceData>.TickData<SomeInstanceData>>(ref LateUpdateOp);
+            UpdateLogics = new Logics<TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>>(ref UpdateOp);
+            FixedUpdateLogics = new Logics<TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>>(ref FixedUpdateOp);
+            LateUpdateLogics = new Logics<TickLogic<SomeInstanceData>.TickLogicData<SomeInstanceData>>(ref LateUpdateOp);
         }
         
     }

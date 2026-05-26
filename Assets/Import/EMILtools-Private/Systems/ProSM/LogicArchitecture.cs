@@ -11,7 +11,8 @@ namespace ProSM.LogicArchitecture
     {
         public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ref NativeList<T> list) where T : unmanaged => new(list.GetUnsafeReadOnlyPtr(), list.Length);
     }
-    
+
+
     
     /// <summary>
     /// Handle that stores static logic operations on instance data, as an instance

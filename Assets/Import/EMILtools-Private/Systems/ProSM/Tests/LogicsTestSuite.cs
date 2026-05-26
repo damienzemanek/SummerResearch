@@ -55,12 +55,12 @@ public class LogicsTestSuite
     public unsafe void Test4_TickLogic_Handle_Execution()
     {
         var data = new ExampleData() { x = 10f };
-        var tickData = new TickLogic<ExampleData>.TickData<ExampleData>(
+        var tickData = new TickLogic<ExampleData>.TickLogicData<ExampleData>(
             _deltaTime: 0.16f,
-            _coreLogics: ExampleLogic.OperationLogics, // This is fine that its not a ref cause the Op is reaodonly
+            _coreLogics: ref ExampleLogic.OperationLogics, // This is fine that its not a ref cause the Op is reaodonly
             ref data);
         
-        var tickLogic = TickLogic<ExampleData>.Operation;
+        var tickLogic = TickLogic<ExampleData>.TickLogics;
 
         // execute the tick logic pipe
         tickLogic.TryRunAllSequentially(ref tickData);
@@ -73,10 +73,10 @@ public class LogicsTestSuite
     public void Test5_StateLogic_Delegates_Assignment()
     {
         // verify logic handles can be assigned to StateData
-        // these usually point to LogicHandles that process TickData
+        // these usually point to LogicHandles that process TickLogicData
         
         var stateData = new StateData<ExampleData>(0);
-        stateData.OnUpdate = TickLogic<ExampleData>.Operation;
+        stateData.OnUpdate = TickLogic<ExampleData>.TickLogics;
         stateData.OnEnterState = ExampleLogic.OperationLogics;
 
         Assert.IsTrue(stateData.OnUpdate.Count > 0);
@@ -86,6 +86,6 @@ public class LogicsTestSuite
     }
 
     // dummy implementations for delegate pointer testing
-    private static unsafe void DummyUpdate(TickLogic<ExampleData>.TickData<ExampleData>* data) { }
-    private static unsafe void DummyEnter(TickLogic<ExampleData>.TickData<ExampleData>* data) { }
+    private static unsafe void DummyUpdate(TickLogic<ExampleData>.TickLogicData<ExampleData>* data) { }
+    private static unsafe void DummyEnter(TickLogic<ExampleData>.TickLogicData<ExampleData>* data) { }
 }

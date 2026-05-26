@@ -1,4 +1,5 @@
 using ProSM.DataArchitecture;
+using ProSM.StateArchitecture;
 using UnityEngine;
 
 namespace ProTimers
@@ -6,10 +7,7 @@ namespace ProTimers
  
     public class ProTimerGlobalTicker : MonoBehaviour
     {
-        void Update()
-        {
-            Batcher.Process();
-        }
+        void Update() => TimerStack.TickActives();
     }
 
     public static class ProTimerUtility

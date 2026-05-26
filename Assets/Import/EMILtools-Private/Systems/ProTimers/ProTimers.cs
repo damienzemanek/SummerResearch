@@ -3,6 +3,7 @@ using ProSM.DataArchitecture;
 using ProSM.LogicArchitecture;
 using ProSM.StateArchitecture;
 using Unity.Collections;
+using UnityEngine;
 
 
 namespace ProTimers
@@ -50,26 +51,56 @@ namespace ProTimers
         
     }
 
-    public unsafe struct ProTimer<T> where T : unmanaged
+    public struct ProTimer
     {
-        public float time;
-        public T* data;
-        public ref T Data => ref *data;
-        public TickMath math;
-        public NativeArray<TimerEvent<T>> events;
+        public Data<TimerEvent> events;  
+        public readonly TickMath math;
+    
+        public ProTimer(TickMath _math, ref Data<TimerEvent> _events)
+        {
+            math = _math;
+            events = _events;
+        }
     }
 
-    public struct TimerEvent<T> where T : unmanaged
+    public unsafe struct TimerEvent
     {
-       // public ByteBool keepTicking;
-        
-        internal TimerPredicateInfo info;
-        internal Predicate predicate;
-        internal LogicOperation<T> OnTriggered;
+        public ByteBool keepTicking;
+
+        public TimerPredicateInfo info;
+        public Predicate predicate;
+        public LogicOperation<IntPtr>* onFinished; 
+        public ref LogicOperation<IntPtr> OnFinished => ref *onFinished;
+        public IntPtr triggeredDataPtr;
+
+        public static TimerEvent NoData(TimerPredicateInfo _info, Predicate _predicate,
+            ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered)
+        {
+            return new TimerEvent()
+            {
+                info = _info,
+                predicate = _predicate,
+                onFinished = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
+                keepTicking = new ByteBool(keepTickingAfterEventTriggered),
+                triggeredDataPtr = IntPtr.Zero
+            };
+        }
+
+        public static TimerEvent WithData(TimerPredicateInfo _info, Predicate _predicate,
+            ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered, IntPtr dataPtr)
+        {
+            return new TimerEvent()
+            {
+                info = _info,
+                predicate = _predicate,
+                onFinished = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
+                keepTicking = new ByteBool(keepTickingAfterEventTriggered),
+                triggeredDataPtr = dataPtr
+            };
+        }
         
         // Want the callback to do something when it ends
         // Want the callback to inactive itself on the TimerStack
-        //public delegate*<void*, void*> cb_StopTicking;r
         public bool IsTriggered => predicate.Evaluate(ref info);
     }
 
@@ -77,48 +108,77 @@ namespace ProTimers
     // Idles dont poll
     // Delegate* wrapped struct timer
     
-    public static class TimerStack<T> where T : unmanaged 
+    public static class TimerStack
     {
         // Timer `Playing` will rely on active state on Data index
-        static Data<ProTimer<T>> timers;
-        
-        // PLay
-        
-        // Stop
-        
-        // Add
+        static Data<ProTimer> timers;
 
-        public static int AddTimer(ref ProTimer<T> _timer)
+        static TimerStack() => Reset();
+        public static void Reset()
+        {
+            if (timers.Active) timers.Dispose();
+            timers = new Data<ProTimer>(10000, Allocator.Persistent);
+        }
+
+        public static int AddTimer(ref ProTimer _timer)
         {
             timers.Allocate(ref _timer, out var id);
             StopTimer(id);
             return id;
         }
 
-        public static void PlayTimer(int id) => timers.GetWrapper(id).Active.Set(true);
-        public static void StopTimer(int id) => timers.GetWrapper(id).Active.Set(false);
+        public static void PlayTimer(int id)
+        {
+            timers.GetWrapper(id).Active.Set(true);
+        }
+
+        public static void StopTimer(int id)
+        {
+            timers.GetWrapper(id).Active.Set(false);
+        }
+
+        public static void TickActives()
+        {
+            Batcher.Process(ref timers, TimerStackLogics.TickTimerLogics);
+        }
+        
+        public static void TickActivesDebug(float deltaTime)
+        {
+            TimerStackLogics.CurrentDeltaTime = deltaTime; 
+            Batcher.Process(ref timers, TimerStackLogics.TickTimerLogics);
+        }
     }
 
-    // This is a nested opeartion call
-    // TickOperation calls the Operation inside of TimerEvent if the timer event is triggered
+    // This is a nested operation call
+    // TickOperation calls the delegate inside of TimerEvent if the timer event is triggered
     // for each `TimerEvent` in the ProTimer
-    public static unsafe class TimerStackLogics<T> where T : unmanaged  
+    public static unsafe class TimerStackLogics
     {
-        public static LogicOperation<TickLogic<ProTimer<T>>.TickData<ProTimer<T>>> TickOperation 
-            = new(&TickRun, &TickShouldRun); 
-        static bool TickShouldRun(TickLogic<ProTimer<T>>.TickData<ProTimer<T>>* tickData) => true;
-        static void TickRun(TickLogic<ProTimer<T>>.TickData<ProTimer<T>>* _tickData)
+        public static bool isTesting = false;
+        public static float CurrentDeltaTime; // Temporary storage for the batch process
+        
+        public static LogicOperation<ProTimer> tickTimerOperation = new(&TickTimerRun, &TickTimerShouldRun);
+        static bool TickTimerShouldRun(ProTimer* timer) => true;
+        static void TickTimerRun(ProTimer* timer)
         {
-            ref var tickData = ref *_tickData;
-            ref var timer = ref tickData.CoreData;
-            timer.time += (timer.math == TickMath.Add) ? tickData.deltaTime : -tickData.deltaTime;
-            for (int i = 0; i < timer.events.Length; i++)
+            float dt = isTesting ? CurrentDeltaTime : Time.deltaTime;
+            if (timer->math == TickMath.Subtract) dt = -dt;
+
+            for (int i = 0; i < timer->events.currentSize; i++)
             {
-                var triggered = timer.events[i].IsTriggered;
-                if(!triggered || !timer.events[i].OnTriggered.ShouldRun(in timer.Data)) continue;
-                timer.events[i].OnTriggered.Run(ref timer.Data);
+                if (!timer->events.GetWrapper(i).Active) continue;
+                
+                ref var timerEvent = ref timer->events[i]; 
+                timerEvent.info.time += dt;
+                
+                if(!timerEvent.IsTriggered) continue;
+                if (!timerEvent.OnFinished.ShouldRun(in timerEvent.triggeredDataPtr)) continue;
+                if (timerEvent.keepTicking == false) timer->events.GetWrapper(i).Active.Set(false);
+                timerEvent.OnFinished.Run(ref timerEvent.triggeredDataPtr);
+                
             }
         }
+        public static Logics<ProTimer> TickTimerLogics = new(ref tickTimerOperation);
     }
     
     

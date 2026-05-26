@@ -28,6 +28,7 @@ namespace ProSM.DataArchitecture
         public void Set(bool _value) => value = (byte)(_value ? 1 : 0);
         public static implicit operator bool(ByteBool b) => b.active;
         public static implicit operator ByteBool(bool b) => new ByteBool { value = (byte)(b ? 1 : 0) };
+        public ByteBool(bool _value) => value = (byte)(_value ? 1 : 0);
     }
 
     

@@ -9,7 +9,9 @@
         "Unity.Collections.BurstCompatibilityGen",
         "ProTimers"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": true,

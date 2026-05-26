@@ -13,9 +13,9 @@ namespace ProSM.StateArchitecture
         public int state;
         public Data<Transition> transitions;
         
-        public Logics<TickLogic<TData>.TickData<TData>> OnUpdate;
-        public Logics<TickLogic<TData>.TickData<TData>> OnFixedUpdate;
-        public Logics<TickLogic<TData>.TickData<TData>> OnLateUpdate;
+        public Logics<TickLogic<TData>.TickLogicData<TData>> OnUpdate;
+        public Logics<TickLogic<TData>.TickLogicData<TData>> OnFixedUpdate;
+        public Logics<TickLogic<TData>.TickLogicData<TData>> OnLateUpdate;
     
         public Logics<TData> OnEnterState;  
         public Logics<TData> OnExitState;
@@ -35,29 +35,30 @@ namespace ProSM.StateArchitecture
     
     public static unsafe class TickLogic<TData> where TData : unmanaged
     {
-        public struct TickData<TData> where TData : unmanaged
+        public struct TickLogicData<TData> where TData : unmanaged
         {
             public float deltaTime;
-            public Logics<TData> coreLogics;
+            readonly Logics<TData>* coreLogics;
+            public ref Logics<TData> CoreLogics => ref *coreLogics;
             readonly TData* coreData;
             public ref TData CoreData => ref *coreData;
-            public TickData(float _deltaTime, Logics<TData> _coreLogics, ref TData _coreData)
+            public TickLogicData(float _deltaTime, ref Logics<TData> _coreLogics, ref TData _coreData)
             {
                 deltaTime = _deltaTime;
-                coreLogics = _coreLogics;
+                coreLogics = (Logics<TData>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _coreLogics);
                 coreData = (TData*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _coreData);
             }
         }
     
         // concrete impementations
         // Deref pointer satisfies ref T param on TryRun
-        static void Run(TickData<TData>* data) => data->coreLogics.TryRunAllSequentially(ref data->CoreData);
-        static bool ShouldRun(TickData<TData>* data) => true;
+        static void Run(TickLogicData<TData>* data) => data->CoreLogics.TryRunAllSequentially(ref data->CoreData);
+        static bool ShouldRun(TickLogicData<TData>* data) => true;
     
         // Tick Logic (this specfici implementation) only has 1 operation
         // When used in state logic, it will be added as an operation ITSELF to another Logics
-        static readonly LogicOperation<TickData<TData>> TickOperation = new(&Run, &ShouldRun); 
-        public static readonly Logics<TickData<TData>> Operation = new (ref TickOperation);
+        static readonly LogicOperation<TickLogicData<TData>> TickOperation = new(&Run, &ShouldRun); 
+        public static readonly Logics<TickLogicData<TData>> TickLogics = new (ref TickOperation);
     }
     
 

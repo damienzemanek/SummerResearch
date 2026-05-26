@@ -271,12 +271,12 @@ namespace ProSM
             }
         }
         
-        // State Ticks with internal TickData creation
+        // State Ticks with internal TickLogicData creation
         public static void TickUpdate<TData>(this ref ProSM<TData> fsm, float deltaTime, Logics<TData> coreLogics, ref TData data) 
             where TData : unmanaged
         {
-            // Create TickData on the stack - pointer is guaranteed stable for the duration of this call
-            var tickData = new TickLogic<TData>.TickData<TData>(deltaTime, coreLogics, ref data);
+            // Create TickLogicData on the stack - pointer is guaranteed stable for the duration of this call
+            var tickData = new TickLogic<TData>.TickLogicData<TData>(deltaTime, ref coreLogics, ref data);
     
             for (int i = 0; i < fsm.layers.currentSize; i++)
             {
@@ -289,8 +289,8 @@ namespace ProSM
         public static void TickFixedUpdate<TData>(this ref ProSM<TData> fsm, float deltaTime, Logics<TData> coreLogics, ref TData data)
             where TData : unmanaged
         {
-            // Create TickData on the stack - pointer is guaranteed stable for the duration of this call
-            var tickData = new TickLogic<TData>.TickData<TData>(deltaTime, coreLogics, ref data);
+            // Create TickLogicData on the stack - pointer is guaranteed stable for the duration of this call
+            var tickData = new TickLogic<TData>.TickLogicData<TData>(deltaTime, ref coreLogics, ref data);
     
             for (int i = 0; i < fsm.layers.currentSize; i++)
             {
@@ -302,8 +302,8 @@ namespace ProSM
         public static void TickLateUpdate<TData>(this ref ProSM<TData> fsm, float deltaTime, Logics<TData> coreLogics, ref TData data)
             where TData : unmanaged
         {
-            // Create TickData on the stack - pointer is guaranteed stable for the duration of this call
-            var tickData = new TickLogic<TData>.TickData<TData>(deltaTime, coreLogics, ref data);
+            // Create TickLogicData on the stack - pointer is guaranteed stable for the duration of this call
+            var tickData = new TickLogic<TData>.TickLogicData<TData>(deltaTime, ref coreLogics, ref data);
     
             for (int i = 0; i < fsm.layers.currentSize; i++)
             {

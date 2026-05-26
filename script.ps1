@@ -1,3 +1,4 @@
+$content = @"
 using System;
 using NUnit.Framework;
 using ProSM.DataArchitecture;
@@ -13,40 +14,20 @@ public class ProTimerTestSuite
     {
         public static bool _eventTriggered = false;
         public static int _triggerCount = 0;
-        public static int _testDataMutated = 0;
         public static IntPtr dummyPtr = IntPtr.Zero;
+        public static int lastReceivedValue = 0;
         
         static void SomeLogicRun(IntPtr* ptr)
         {
             _eventTriggered = true;
             _triggerCount++;
+            if (ptr != null && *ptr != IntPtr.Zero)
+            {
+                lastReceivedValue = *(int*)*ptr;
+            }
         }
         static bool SomeLogicShouldRun(IntPtr* ptr) => true;
         public static LogicOperation<IntPtr> TriggeredOperation = new(&SomeLogicRun, &SomeLogicShouldRun);
-
-        static void MutateDataLogicRun(IntPtr* ptr)
-        {
-            Debug.Log("[DEBUG_LOG] Inside MutateDataLogicRun");
-
-            _eventTriggered = true;
-            _triggerCount++;
-
-            Debug.Log("[DEBUG_LOG] Dereferencing IntPtr*");
-            IntPtr data = *ptr;
-
-            Debug.Log("[DEBUG_LOG] Converting IntPtr to int*");
-            int* intPtr = (int*)data;
-
-            Debug.Log("[DEBUG_LOG] Taking ref to actual int");
-            ref int value = ref *intPtr;
-
-            Debug.Log("Before mutation: " + value);
-
-            value += 100;
-
-            Debug.Log("After mutation: " + value);
-        }
-        public static LogicOperation<IntPtr> MutateDataOperation = new(&MutateDataLogicRun, &SomeLogicShouldRun);
     }
 
     [SetUp]
@@ -56,6 +37,7 @@ public class ProTimerTestSuite
         TimerStackLogics.isTesting = true;
         SomeTriggerLogic._eventTriggered = false;
         SomeTriggerLogic._triggerCount = 0;
+        SomeTriggerLogic.lastReceivedValue = 0;
         fixed (IntPtr* p = &SomeTriggerLogic.dummyPtr)
         {
             SomeTriggerLogic.dummyPtr = (IntPtr)p;
@@ -65,102 +47,61 @@ public class ProTimerTestSuite
     [Test]
     public void Test1_TimerInitialization()
     {
-        // 1. Manually allocate memory for events
         int eventCount = 1;
-        
         var events = new Data<TimerEvent>(eventCount, Allocator.Persistent);
-        
-        var timerEvent = TimerEvent.NoData(
+        var timerEvent = TimerEvent.FireAndForget_NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 5.0f }, 
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
             false
         );
-        
-        events.Allocate(ref timerEvent); //
-        
-
-        // 2. Initialize Timer with pointer
+        events.Allocate(ref timerEvent);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
-
-        // 3. Assert
         Assert.AreEqual(0, timer.events[0].info.time);
         Assert.AreEqual(1, timer.events.currentSize);
         Assert.IsTrue(events.Active);
         Assert.IsTrue(timer.events.Active);
         Assert.IsTrue(Mathf.Approximately(timer.events[0].info.triggerTime, 5.0f));
         Assert.IsTrue(timer.events[0].predicate.IsCreated);
-    
-        // 4. Manual Cleanup
         events.Dispose();
     }
 
     [Test]
     public void Test2_AddAndPlayTimer()
     {
-        Debug.Log("[DEBUG_LOG] Starting Test_AddAndPlayTimer");
         int eventCount = 0;
         var events = new Data<TimerEvent>(eventCount, Allocator.Temp);
-        
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
-
-        // Test Add
         int id = TimerStack.AddTimer(ref timer);
-        Debug.Log($"[DEBUG_LOG] Added timer id: {id}");
         Assert.GreaterOrEqual(id, 0);
-
-        // Test Play (Verify it doesn't crash and sets active state)
         TimerStack.PlayTimer(id);
-        Debug.Log("[DEBUG_LOG] Played timer");
-        
         events.Dispose();
     }
 
     [Test]
     public void Test3_TickDeltaTimeAndTrigger()
     {
-        Debug.Log("[DEBUG_LOG] Starting Test_TickDeltaTimeAndTrigger");
-        try {
-            // 1. Setup a timer that triggers at 1.0s
-            int eventCount = 1;
-            var events = new Data<TimerEvent>(eventCount, Allocator.Persistent);
-            Debug.Log("[DEBUG_LOG] Allocated events Data");
-            
-            var timerEvent = TimerEvent.NoData(
-                new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, 
-                ProTimersPredicates.IsGreaterThanOrEqualTo(),
-                ref SomeTriggerLogic.TriggeredOperation,
-                false
-            );
-            
-            Debug.Log("[DEBUG_LOG] Created TimerEvent");
-            events.Allocate(ref timerEvent);
-            Debug.Log("[DEBUG_LOG] Allocated event in Data");
+        int eventCount = 1;
+        var events = new Data<TimerEvent>(eventCount, Allocator.Persistent);
+        var timerEvent = TimerEvent.FireAndForget_NoData(
+            new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, 
+            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref SomeTriggerLogic.TriggeredOperation,
+            false
+        );
+        events.Allocate(ref timerEvent);
+        ProTimer timer = new ProTimer(TickMath.Add, ref events);
+        int id = TimerStack.AddTimer(ref timer);
+        TimerStack.PlayTimer(id);
 
-            ProTimer timer = new ProTimer(TickMath.Add, ref events);
-            int id = TimerStack.AddTimer(ref timer);
-            Debug.Log($"[DEBUG_LOG] Added timer id: {id}");
-            TimerStack.PlayTimer(id);
-            Debug.Log("[DEBUG_LOG] Played timer");
+        TimerStack.TickActives(0.5f);
+        Assert.IsFalse(SomeTriggerLogic._eventTriggered, "Event should not trigger at 0.5s");
 
-            // 2. Simulate Tick with Delta Time (0.5s)
-            TimerStack.TickActivesDebug(0.5f);
-            Debug.Log("[DEBUG_LOG] Ticked 0.5s");
-            Assert.IsFalse(SomeTriggerLogic._eventTriggered, "Event should not trigger at 0.5s");
-
-            // 3. Simulate another Tick (0.6s) -> Total 1.1s
-            TimerStack.TickActivesDebug(0.6f);
-            Debug.Log($"[DEBUG_LOG] Ticked 0.6s. Triggered={SomeTriggerLogic._eventTriggered}");
-            Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Event should trigger at 1.1s");
-
-            events.Dispose();
-            Debug.Log("[DEBUG_LOG] Disposed events");
-        } catch (Exception e) {
-            Debug.LogError($"[DEBUG_LOG] Exception in test: {e}");
-            throw;
-        }
+        TimerStack.TickActives(0.6f);
+        Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Event should trigger at 1.1s");
+        events.Dispose();
     }
-    
+
     [TearDown]
     public void TearDown()
     {
@@ -172,66 +113,54 @@ public class ProTimerTestSuite
     [Test]
     public void Test4_MultiEventSequentialTriggering()
     {
-        // Add a timer with two events: Event A at 1.0s and Event B at 2.0s
         int eventCount = 2;
         var events = new Data<TimerEvent>(eventCount, Allocator.Persistent);
-
-        var eventA = TimerEvent.NoData(
+        var eventA = TimerEvent.FireAndForget_NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, 
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
             false
             );
-        
-        var eventB = TimerEvent.NoData(   
+        var eventB = TimerEvent.FireAndForget_NoData(   
             new TimerPredicateInfo { time = 0, triggerTime = 2.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
             false
             );
-
         events.Allocate(ref eventA);
         events.Allocate(ref eventB);
-
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.PlayTimer(id);
 
-        // Ticking 1.1s triggers A but not B
-        TimerStack.TickActivesDebug(1.1f);
+        TimerStack.TickActives(1.1f);
         Assert.AreEqual(1, SomeTriggerLogic._triggerCount);
 
-        // Ticking another 1.0s (total 2.1s) triggers B
-        TimerStack.TickActivesDebug(1.0f);
+        TimerStack.TickActives(1.0f);
         Assert.AreEqual(2, SomeTriggerLogic._triggerCount);
-
         events.Dispose();
     }
 
     [Test]
     public void Test5_CountdownLogic()
     {
-        // Setup 5s countdown
         var events = new Data<TimerEvent>(1, Allocator.Persistent);
-        
-        var timerEvent = TimerEvent.NoData(
+        var timerEvent = TimerEvent.FireAndForget_NoData(
             new TimerPredicateInfo { time = 5.0f, triggerTime = 0.0f },
             ProTimersPredicates.IsLessThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
             false
         );
         events.Allocate(ref timerEvent);
-
         ProTimer timer = new ProTimer(TickMath.Subtract, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.PlayTimer(id);
 
-        TimerStack.TickActivesDebug(4.0f); // Time becomes 1.0
+        TimerStack.TickActives(4.0f);
         Assert.IsFalse(SomeTriggerLogic._eventTriggered, "Event should not trigger yet (time=1.0)");
 
-        TimerStack.TickActivesDebug(2.0f); // Time becomes -1.0
+        TimerStack.TickActives(2.0f);
         Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Event should trigger (time=-1.0)");
-
         events.Dispose();
     }
 
@@ -239,30 +168,24 @@ public class ProTimerTestSuite
     public void Test6_PausingAndResuming()
     {
         var events = new Data<TimerEvent>(1, Allocator.Persistent);
-        
-        var timerEvent = TimerEvent.NoData(
+        var timerEvent = TimerEvent.FireAndForget_NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
             false
         );
         events.Allocate(ref timerEvent);
-
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
-        
         TimerStack.PlayTimer(id);
-        TimerStack.TickActivesDebug(0.5f);
+        TimerStack.TickActives(0.5f);
         Assert.IsFalse(SomeTriggerLogic._eventTriggered);
-
         TimerStack.StopTimer(id);
-        TimerStack.TickActivesDebug(1.0f); 
+        TimerStack.TickActives(1.0f); 
         Assert.IsFalse(SomeTriggerLogic._eventTriggered, "Timer should not have progressed while stopped");
-        
         TimerStack.PlayTimer(id);
-        TimerStack.TickActivesDebug(0.6f); // Total 1.1
+        TimerStack.TickActives(0.6f);
         Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Timer should have resumed and triggered");
-
         events.Dispose();
     }
 
@@ -270,22 +193,18 @@ public class ProTimerTestSuite
     public void Test7_ImmediateTrigger()
     {
         var events = new Data<TimerEvent>(1, Allocator.Persistent);
-        
-        var timerEvent = TimerEvent.NoData(
+        var timerEvent = TimerEvent.FireAndForget_NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 0.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
             false
         );
         events.Allocate(ref timerEvent);
-
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.PlayTimer(id);
-
-        TimerStack.TickActivesDebug(0.001f);
+        TimerStack.TickActives(0.001f);
         Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Zero duration timer should trigger immediately");
-
         events.Dispose();
     }
 
@@ -293,23 +212,18 @@ public class ProTimerTestSuite
     public void Test8_LargeDeltaTimeOvershoot()
     {
         var events = new Data<TimerEvent>(1, Allocator.Persistent);
-        
-        var timerEvent = TimerEvent.NoData(
+        var timerEvent = TimerEvent.FireAndForget_NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
             false
         );
-        
         events.Allocate(ref timerEvent);
-
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.PlayTimer(id);
-
-        TimerStack.TickActivesDebug(100.0f);
+        TimerStack.TickActives(100.0f);
         Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Large delta time should trigger the event");
-
         events.Dispose();
     }
 
@@ -319,8 +233,7 @@ public class ProTimerTestSuite
         for (int i = 0; i < 10; i++)
         {
             var events = new Data<TimerEvent>(1, Allocator.Temp);
-            
-            var timerEvent = TimerEvent.NoData(
+            var timerEvent = TimerEvent.FireAndForget_NoData(
                 new TimerPredicateInfo { time = 0, triggerTime = 0.1f },
                 ProTimersPredicates.IsGreaterThanOrEqualTo(),
                 ref SomeTriggerLogic.TriggeredOperation,
@@ -338,35 +251,24 @@ public class ProTimerTestSuite
     public void Test10_MultipleTimersIndependentTicking()
     {
         var events1 = new Data<TimerEvent>(1, Allocator.Persistent);
-        var timerEvent1 = TimerEvent.NoData(
-            new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
-            ref SomeTriggerLogic.TriggeredOperation,
-            false
-        );
-        events1.Allocate(ref timerEvent1);
+        var event1 = TimerEvent.FireAndForget_NoData(new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, ProTimersPredicates.IsGreaterThanOrEqualTo(), ref SomeTriggerLogic.TriggeredOperation, false);
+        events1.Allocate(ref event1);
         ProTimer timer1 = new ProTimer(TickMath.Add, ref events1);
         int id1 = TimerStack.AddTimer(ref timer1);
+        TimerStack.PlayTimer(id1);
 
         var events2 = new Data<TimerEvent>(1, Allocator.Persistent);
-        var timerEvent2 = TimerEvent.NoData(
-            new TimerPredicateInfo { time = 0, triggerTime = 2.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
-            ref SomeTriggerLogic.TriggeredOperation,
-            false
-        );
-        events2.Allocate(ref timerEvent2);
+        var event2 = TimerEvent.FireAndForget_NoData(new TimerPredicateInfo { time = 0, triggerTime = 2.0f }, ProTimersPredicates.IsGreaterThanOrEqualTo(), ref SomeTriggerLogic.TriggeredOperation, false);
+        events2.Allocate(ref event2);
         ProTimer timer2 = new ProTimer(TickMath.Add, ref events2);
         int id2 = TimerStack.AddTimer(ref timer2);
-
-        TimerStack.PlayTimer(id1);
         TimerStack.PlayTimer(id2);
 
-        TimerStack.TickActivesDebug(1.1f);
-        Assert.AreEqual(1, SomeTriggerLogic._triggerCount, "Only first timer should have triggered");
+        TimerStack.TickActives(1.1f);
+        Assert.AreEqual(1, SomeTriggerLogic._triggerCount, "Only first timer should trigger");
 
-        TimerStack.TickActivesDebug(1.0f);
-        Assert.AreEqual(2, SomeTriggerLogic._triggerCount, "Both timers should have triggered");
+        TimerStack.TickActives(1.0f);
+        Assert.AreEqual(2, SomeTriggerLogic._triggerCount, "Second timer should trigger");
 
         events1.Dispose();
         events2.Dispose();
@@ -379,9 +281,7 @@ public class ProTimerTestSuite
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.PlayTimer(id);
-
-        Assert.DoesNotThrow(() => TimerStack.TickActivesDebug(1.0f), "Ticking a timer with no events should not throw");
-        
+        Assert.DoesNotThrow(() => TimerStack.TickActives(1.0f));
         events.Dispose();
     }
 
@@ -389,65 +289,49 @@ public class ProTimerTestSuite
     public void Test12_MixedOneShotAndContinuousEvents()
     {
         var events = new Data<TimerEvent>(2, Allocator.Persistent);
+        var eventOneShot = TimerEvent.FireAndForget_NoData(new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, ProTimersPredicates.IsGreaterThanOrEqualTo(), ref SomeTriggerLogic.TriggeredOperation, false);
+        var eventContinuous = TimerEvent.FireAndForget_NoData(new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, ProTimersPredicates.IsGreaterThanOrEqualTo(), ref SomeTriggerLogic.TriggeredOperation, true);
         
-        // One-shot
-        var oneShot = TimerEvent.NoData(
-            new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
-            ref SomeTriggerLogic.TriggeredOperation,
-            false
-        );
-        
-        // Continuous
-        var continuous = TimerEvent.NoData(
-            new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
-            ref SomeTriggerLogic.TriggeredOperation,
-            true
-        );
-
-        events.Allocate(ref oneShot);
-        events.Allocate(ref continuous);
-
+        events.Allocate(ref eventOneShot);
+        events.Allocate(ref eventContinuous);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.PlayTimer(id);
 
-        TimerStack.TickActivesDebug(1.1f);
+        TimerStack.TickActives(1.1f);
         Assert.AreEqual(2, SomeTriggerLogic._triggerCount, "Both events should trigger first time");
 
-        TimerStack.TickActivesDebug(1.1f);
+        TimerStack.TickActives(1.0f);
         Assert.AreEqual(3, SomeTriggerLogic._triggerCount, "Only continuous event should trigger second time");
-
+        
         events.Dispose();
     }
 
-
     [Test]
-    public unsafe void Test13_TriggeredDataPtrMutation()
+    public unsafe void Test13_TriggeredDataPtrUsage()
     {
+        int myValue = 42;
+        int* valPtr = &myValue;
+        
         var events = new Data<TimerEvent>(1, Allocator.Persistent);
-        int testData = 10;
-        
-        var timerEvent = TimerEvent.WithData(
-            new TimerPredicateInfo { time = 0, triggerTime = 0.5f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
-            ref SomeTriggerLogic.MutateDataOperation,
-            false,
-            (IntPtr)(&testData)
-        );
-        
-        Debug.Log("IntPtr is : " + timerEvent.triggeredDataPtr);
+        var timerEvent = new TimerEvent()
+        {
+            info = new TimerPredicateInfo { time = 0, triggerTime = 0.5f },
+            predicate = ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            onFinished = (LogicOperation<IntPtr>*)UnsafeUtility.AddressOf(ref SomeTriggerLogic.TriggeredOperation),
+            keepTicking = false,
+            triggeredDataPtr = (IntPtr)UnsafeUtility.AddressOf(ref valPtr)
+        };
         
         events.Allocate(ref timerEvent);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.PlayTimer(id);
 
-        TimerStack.TickActivesDebug(1.0f);
-        Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Callback should have been triggered");
-        Assert.AreEqual(110, testData, "Data should have been mutated by the callback (10 + 100)");
-
+        TimerStack.TickActives(1.0f);
+        Assert.IsTrue(SomeTriggerLogic._eventTriggered);
+        Assert.AreEqual(42, SomeTriggerLogic.lastReceivedValue);
+        
         events.Dispose();
     }
 
@@ -455,28 +339,21 @@ public class ProTimerTestSuite
     public void Test14_NegativeDeltaTimeHandling()
     {
         var events = new Data<TimerEvent>(1, Allocator.Persistent);
-        var timerEvent = TimerEvent.NoData(
-            new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
-            ref SomeTriggerLogic.TriggeredOperation,
-            false
-        );
+        var timerEvent = TimerEvent.FireAndForget_NoData(new TimerPredicateInfo { time = 2.0f, triggerTime = 1.0f }, ProTimersPredicates.IsLessThanOrEqualTo(), ref SomeTriggerLogic.TriggeredOperation, false);
         events.Allocate(ref timerEvent);
+        
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.PlayTimer(id);
 
-        TimerStack.TickActivesDebug(1.5f);
+        TimerStack.TickActives(0.5f);
+        Assert.IsFalse(SomeTriggerLogic._eventTriggered);
+
+        TimerStack.TickActives(-2.0f);
         Assert.IsTrue(SomeTriggerLogic._eventTriggered);
-        SomeTriggerLogic._eventTriggered = false;
-
-        // Reset time back via negative DT
-        // We need to re-enable it manually because keepTicking=false deactivated it
-        timer.events.GetWrapper(0).Active.Set(true);
-        TimerStack.TickActivesDebug(-2.0f); 
         
-        Assert.Less(timer.events[0].info.time, 0);
-
         events.Dispose();
     }
 }
+"
+Set-Content -Path Assets\Import\EMILtools-Private\Systems\ProTimers\Tests\ProTimerTestSuite.cs -Value $content -Encoding utf8

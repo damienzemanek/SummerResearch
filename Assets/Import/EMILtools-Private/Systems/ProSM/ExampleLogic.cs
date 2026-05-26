@@ -31,7 +31,7 @@ namespace ProSM.LogicExamples
         // (!) Not all `Logics` classes will have an OperationLogics handle (!)
         //   - Logics will be composed of many different operations from seperate static Logic classes
         // (!) `Logics` can be instanced to create multiple variations, they do not need to be static, but it is preferred
-        public static readonly Logics<ExampleData> OperationLogics = new(ref Operation);
+        public static Logics<ExampleData> OperationLogics = new(ref Operation);
     }
 }
 
