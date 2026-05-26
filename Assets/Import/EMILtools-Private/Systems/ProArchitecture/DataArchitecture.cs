@@ -107,7 +107,7 @@ namespace ProArchitecture.Data
         public int currentSize => nextIndex;
         public ByteBool Active;
         int nextIndex;
-        UnsafeList<DataWrapper> data;
+        internal UnsafeList<DataWrapper> data;
         
         public Data() => throw new System.NotImplementedException("Use Data(int capacity, Allocator allocator) constructor to initialize with a specific capacity and allocator.");
 
@@ -117,6 +117,13 @@ namespace ProArchitecture.Data
             data = new UnsafeList<DataWrapper>(capacity, allocator);
             Active = new ByteBool();
             Active.Set(true);
+        }
+
+        public Data(Data<T> tempAllocatedEvents)
+        {
+            nextIndex = tempAllocatedEvents.nextIndex;
+            data = tempAllocatedEvents.data;
+            Active = tempAllocatedEvents.Active;
         }
 
         /// <summary>
@@ -135,8 +142,8 @@ namespace ProArchitecture.Data
             return nextIndex++;
         }
         public void Allocate(ref T _data, out int allocationId) => allocationId = Allocate(ref _data);
-
-
+        
+        
         /// <summary>
         /// Used for Object Pooling to reallocate unsued indicies
         /// </summary>

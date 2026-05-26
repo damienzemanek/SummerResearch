@@ -9,7 +9,7 @@ using static ProSMTestSuite.SomeInstanceLogic;
 
 public class ProSMTestSuite : MonoBehaviour
 {
-    static unsafe class ExamplePredicates
+    public static unsafe class ExamplePredicates
     {   
         // Little verbose, but oh well
         public static Predicate IsGreaterThanOne() => new Predicate(&isGreaterThanOne);
@@ -20,8 +20,8 @@ public class ProSMTestSuite : MonoBehaviour
         }
     }
     
-    enum TestLayerOne { L1S1, L1S2, L1S3 }
-    enum TestLayerTwo { L2S1, L2S2, L2S3 }
+    public enum TestLayerOne { L1S1, L1S2, L1S3 }
+    public enum TestLayerTwo { L2S1, L2S2, L2S3 }
     
     [Test]
     public void Test1_Initalizes()
@@ -163,7 +163,7 @@ public class ProSMTestSuite : MonoBehaviour
     
     
     [Test] 
-    public void Test7_AnyTransitions_TryPollTransitions_AnyTransition_Transitions()
+    public void Test7_TryPollTransitions_AnyTransition_Transitions()
     {
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
 
@@ -191,7 +191,7 @@ public class ProSMTestSuite : MonoBehaviour
     }
     
     [Test] 
-    public void Test8_AnyTransitions_TryPollTransitions_DirectTransition_Transitions()
+    public void Test8_TryPollTransitions_DirectTransition_Transitions()
     {
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
 

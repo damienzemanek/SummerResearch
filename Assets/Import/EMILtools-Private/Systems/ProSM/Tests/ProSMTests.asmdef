@@ -6,7 +6,8 @@
         "UnityEditor.TestRunner",
         "Unity.Mathematics",
         "ProSM",
-        "ProArchitecture"
+        "ProArchitecture",
+        "ProTimers"
     ],
     "includePlatforms": [
         "Editor"

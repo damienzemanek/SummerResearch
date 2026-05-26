@@ -37,14 +37,14 @@ namespace ProSM
     public struct Transition
     {
         public short to;
-        public float duration;
         public Predicate condition;
+        public ByteBool durationConditionOverride;
         // mabye in the future make this a logic that does not have to pass in the predicate, but creates it here
-        public Transition(short _to, ref Predicate _condition, float _duration = 0f) 
+        public Transition(short _to, ref Predicate _condition, bool doesNotHaveDuration)
         {
             to = _to;
             condition = _condition;
-            duration = _duration;
+            durationConditionOverride = new ByteBool(doesNotHaveDuration);
         }
     }
 

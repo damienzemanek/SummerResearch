@@ -18,6 +18,11 @@ namespace ProTimers
     {
         public float time;
         public float triggerTime;
+        public TimerPredicateInfo(float _time, float _triggerTime) : this()
+        {
+            time = _time;
+            triggerTime = _triggerTime;
+        }
     }
     
     public static unsafe class ProTimersPredicates
@@ -51,11 +56,15 @@ namespace ProTimers
         
     }
 
+    /// <summary>
+    /// DataEvents live on the ProTimer, which lives in the static TimerStack
+    /// Ensure that you do not allocated Persistent for your temporary Data<TimerEvent> pass through
+    /// </summary>
     public struct ProTimer
     {
         public Data<TimerEvent> events;  
         public readonly TickMath math;
-    
+        
         public ProTimer(TickMath _math, ref Data<TimerEvent> _events)
         {
             math = _math;
@@ -127,7 +136,7 @@ namespace ProTimers
             return id;
         }
 
-        public static void PlayTimer(int id)
+        public static void StartTimer(int id)
         {
             timers.GetWrapper(id).Active.Set(true);
         }

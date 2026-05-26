@@ -110,7 +110,7 @@ public class ProTimerTestSuite
         Assert.GreaterOrEqual(id, 0);
 
         // Test Play (Verify it doesn't crash and sets active state)
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
         Debug.Log("[DEBUG_LOG] Played timer");
         
         events.Dispose();
@@ -140,7 +140,7 @@ public class ProTimerTestSuite
             ProTimer timer = new ProTimer(TickMath.Add, ref events);
             int id = TimerStack.AddTimer(ref timer);
             Debug.Log($"[DEBUG_LOG] Added timer id: {id}");
-            TimerStack.PlayTimer(id);
+            TimerStack.StartTimer(id);
             Debug.Log("[DEBUG_LOG] Played timer");
 
             // 2. Simulate Tick with Delta Time (0.5s)
@@ -195,7 +195,7 @@ public class ProTimerTestSuite
 
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
 
         // Ticking 1.1s triggers A but not B
         TimerStack.TickActivesDebug(1.1f);
@@ -224,7 +224,7 @@ public class ProTimerTestSuite
 
         ProTimer timer = new ProTimer(TickMath.Subtract, ref events);
         int id = TimerStack.AddTimer(ref timer);
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
 
         TimerStack.TickActivesDebug(4.0f); // Time becomes 1.0
         Assert.IsFalse(SomeTriggerLogic._eventTriggered, "Event should not trigger yet (time=1.0)");
@@ -251,7 +251,7 @@ public class ProTimerTestSuite
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
         TimerStack.TickActivesDebug(0.5f);
         Assert.IsFalse(SomeTriggerLogic._eventTriggered);
 
@@ -259,7 +259,7 @@ public class ProTimerTestSuite
         TimerStack.TickActivesDebug(1.0f); 
         Assert.IsFalse(SomeTriggerLogic._eventTriggered, "Timer should not have progressed while stopped");
         
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
         TimerStack.TickActivesDebug(0.6f); // Total 1.1
         Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Timer should have resumed and triggered");
 
@@ -281,7 +281,7 @@ public class ProTimerTestSuite
 
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
 
         TimerStack.TickActivesDebug(0.001f);
         Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Zero duration timer should trigger immediately");
@@ -305,7 +305,7 @@ public class ProTimerTestSuite
 
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
 
         TimerStack.TickActivesDebug(100.0f);
         Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Large delta time should trigger the event");
@@ -359,8 +359,8 @@ public class ProTimerTestSuite
         ProTimer timer2 = new ProTimer(TickMath.Add, ref events2);
         int id2 = TimerStack.AddTimer(ref timer2);
 
-        TimerStack.PlayTimer(id1);
-        TimerStack.PlayTimer(id2);
+        TimerStack.StartTimer(id1);
+        TimerStack.StartTimer(id2);
 
         TimerStack.TickActivesDebug(1.1f);
         Assert.AreEqual(1, SomeTriggerLogic._triggerCount, "Only first timer should have triggered");
@@ -378,7 +378,7 @@ public class ProTimerTestSuite
         var events = new Data<TimerEvent>(0, Allocator.Persistent);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
 
         Assert.DoesNotThrow(() => TimerStack.TickActivesDebug(1.0f), "Ticking a timer with no events should not throw");
         
@@ -411,7 +411,7 @@ public class ProTimerTestSuite
 
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
 
         TimerStack.TickActivesDebug(1.1f);
         Assert.AreEqual(2, SomeTriggerLogic._triggerCount, "Both events should trigger first time");
@@ -442,7 +442,7 @@ public class ProTimerTestSuite
         events.Allocate(ref timerEvent);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
 
         TimerStack.TickActivesDebug(1.0f);
         Assert.IsTrue(SomeTriggerLogic._eventTriggered, "Callback should have been triggered");
@@ -464,7 +464,7 @@ public class ProTimerTestSuite
         events.Allocate(ref timerEvent);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
-        TimerStack.PlayTimer(id);
+        TimerStack.StartTimer(id);
 
         TimerStack.TickActivesDebug(1.5f);
         Assert.IsTrue(SomeTriggerLogic._eventTriggered);

@@ -10,7 +10,7 @@ using UnityEngine;
 namespace ProSM
 {
     
-    public static class ProSMLogic
+    public static partial class ProSMLogic
     {
         // Initalization
         public static void Initialize<TData>(this ref ProSM<TData> fsm, int layerCount)  where TData : unmanaged
@@ -79,7 +79,7 @@ namespace ProSM
             if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
                 
-            var transition = new Transition(Unsafe.As<TStates, short>(ref to), ref predicate);
+            var transition = new Transition(Unsafe.As<TStates, short>(ref to), ref predicate, true);
             fsm.layers[layerIndex].anyTransitions.Allocate(ref transition, out int _);
         }
 
@@ -100,36 +100,9 @@ namespace ProSM
             if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
 
-            var transition = new Transition((short)toIndex, ref predicate);
+            var transition = new Transition((short)toIndex, ref predicate, true);
             fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
         }
-            
-        // public static void AddDirectTimedTransition<TStates, TData>(this ref ProSM<TData> fsm, int layerIndex, TStates from, TStates to, float duration)    
-        //     where TData : unmanaged
-        // {
-        //     // Valid Enum (Input Validation)
-        //     if (typeof(TStates).GetHashCode() != fsm.layers[layerIndex].enumTypeId)
-        //         throw new ArgumentException($"Enum type '{typeof(TStates).Name}' does not match the type used to initialize layer {layerIndex}.");
-        //
-        //     // Valid From (Input Validation)
-        //     int fromIndex = Unsafe.As<TStates, int>(ref from);
-        //     if (fromIndex < 0 || fromIndex >= fsm.layers[layerIndex].states.currentSize)
-        //         throw new ArgumentOutOfRangeException(nameof(from), $"State {from} (index {fromIndex}) does not exist in layer {layerIndex}.");
-        //
-        //     // Valid To (Input Validation)
-        //     int toIndex = Unsafe.As<TStates, int>(ref to);
-        //     if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
-        //         throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
-        //
-        //     //var transition = new Transition((short)toIndex, ref predicate);
-        //     unsafe
-        //     {
-        //         Predicate alwaysTrue = new Predicate(&TrueCondition);
-        //         var transition = new Transition((short)toIndex, ref alwaysTrue, duration);
-        //         fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
-        //         static bool TrueCondition(void* ptr) => true;
-        //     }
-        // }
             
             
             
@@ -170,8 +143,8 @@ namespace ProSM
             for(int i = 0; i < layerdata.anyTransitions.currentSize; i++)
             {
                 ref var transition = ref layerdata.anyTransitions.Get(i);
-                Debug.Log("[ANY] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.duration);
-                if (transition.condition.Evaluate(ref data) && layerdata.timeInState >= transition.duration)
+                Debug.Log("[ANY] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.durationConditionOverride);
+                if (transition.condition.Evaluate(ref data) && transition.durationConditionOverride)
                 {
                     if(layerdata.currentState == transition.to) continue;
                     nextState = transition.to;
@@ -183,8 +156,8 @@ namespace ProSM
             for(int i = 0; i < currentStateData.transitions.currentSize; i++)        
             {
                 ref var transition = ref currentStateData.transitions.Get(i);
-                Debug.Log("[DIRECT] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.duration);
-                if (transition.condition.Evaluate(ref data) && layerdata.timeInState >= transition.duration)
+                Debug.Log("[DIRECT] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.durationConditionOverride);
+                if (transition.condition.Evaluate(ref data) && transition.durationConditionOverride)
                 {
                     if(layerdata.currentState == transition.to) continue;
                     nextState = transition.to;
