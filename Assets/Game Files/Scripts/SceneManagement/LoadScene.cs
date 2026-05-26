@@ -7,6 +7,7 @@ using Extensions;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static EMILtools.Extensions.FadeEX;
+using EMILtools.UXUI;
 
 
 public class LoadScene : ReplacerSingleton<LoadScene>

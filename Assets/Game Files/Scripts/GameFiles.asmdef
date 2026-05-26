@@ -1,0 +1,22 @@
+{
+    "name": "GameFiles",
+    "rootNamespace": "",
+    "references": [
+        "GUID:616e87fce639755479455bc5a9375e4a",
+        "GUID:39f47b00cd3502043a4c8712cbdbf014",
+        "GUID:29f4b205193290344858f73cccad4149",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:efa45043feb7e4147a305b73b5cea642",
+        "GUID:21d1eb854b91ade49bc69a263d12bee2",
+        "GUID:d8b63aba1907145bea998dd612889d6b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

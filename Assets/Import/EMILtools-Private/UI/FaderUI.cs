@@ -1,31 +1,35 @@
 using EMILtools.Extensions;
 using UnityEngine;
 
-public class FaderUI : MonoBehaviour
+namespace EMILtools.UXUI
 {
-    public static FaderUI Instance;
-
-    public Object targ;
-    public bool FadeInOnStart;
-    [SerializeField] FadeSettings fade;
-
-    private void Awake()
+    public class FaderUI : MonoBehaviour
     {
-        Instance = this;
-    }
+        public static FaderUI Instance;
 
-    private void Start()
-    {
-        if (FadeInOnStart)
+        public Object targ;
+        public bool FadeInOnStart;
+        [SerializeField] FadeSettings fade;
+
+        private void Awake()
         {
-            if (fade.targ == null) fade.targ = targ;
-            StartCoroutine(FadeEX.C_FadeToTransparent(fade, () =>
+            Instance = this;
+        }
+
+        private void Start()
+        {
+            if (FadeInOnStart)
             {
-                if (TryGetComponent<CanvasGroup>(out var cg))
+                if (fade.targ == null) fade.targ = targ;
+                StartCoroutine(FadeEX.C_FadeToTransparent(fade, () =>
                 {
-                    cg.blocksRaycasts = false;
-                }
-            }));
+                    if (TryGetComponent<CanvasGroup>(out var cg))
+                    {
+                        cg.blocksRaycasts = false;
+                    }
+                }));
+            }
         }
     }
+
 }
