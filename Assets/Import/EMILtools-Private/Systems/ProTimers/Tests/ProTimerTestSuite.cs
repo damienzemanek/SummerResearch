@@ -30,21 +30,8 @@ public class ProTimerTestSuite
 
             _eventTriggered = true;
             _triggerCount++;
-
-            Debug.Log("[DEBUG_LOG] Dereferencing IntPtr*");
-            IntPtr data = *ptr;
-
-            Debug.Log("[DEBUG_LOG] Converting IntPtr to int*");
-            int* intPtr = (int*)data;
-
-            Debug.Log("[DEBUG_LOG] Taking ref to actual int");
-            ref int value = ref *intPtr;
-
-            Debug.Log("Before mutation: " + value);
-
+            ref int value = ref IntPtrPtrTo<int>.GetRef(ptr);
             value += 100;
-
-            Debug.Log("After mutation: " + value);
         }
         public static LogicOperation<IntPtr> MutateDataOperation = new(&MutateDataLogicRun, &SomeLogicShouldRun);
     }
@@ -57,9 +44,7 @@ public class ProTimerTestSuite
         SomeTriggerLogic._eventTriggered = false;
         SomeTriggerLogic._triggerCount = 0;
         fixed (IntPtr* p = &SomeTriggerLogic.dummyPtr)
-        {
             SomeTriggerLogic.dummyPtr = (IntPtr)p;
-        }
     }
 
     [Test]

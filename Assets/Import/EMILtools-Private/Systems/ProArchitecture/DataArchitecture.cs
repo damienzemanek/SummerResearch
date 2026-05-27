@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ProArchitecture.Logic;
 using Unity.Collections;
@@ -18,6 +19,17 @@ namespace ProArchitecture.Data
                 if(!element.Active) continue;
                 logics.TryRunAllSequentially(ref element.DataVolatile);
             }
+        }
+    }
+
+    public static unsafe class IntPtrPtrTo<T> where T : unmanaged
+    {
+        public static ref T GetRef(IntPtr* data)
+        {
+            IntPtr intptr = *data;
+            T* tptr = (T*)intptr;
+            ref T t = ref *tptr;
+            return ref t;
         }
     }
     

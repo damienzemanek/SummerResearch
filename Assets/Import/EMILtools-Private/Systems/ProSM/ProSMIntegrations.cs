@@ -13,23 +13,18 @@ namespace ProSM
 {
 
     
+    
+    
     public static unsafe class ProSMxProTimersIntegrationLogic
     {
         public static LogicOperation<IntPtr> TransitionOperation = new (&TransitionRun, &TransitionShouldRun);
         
         static void TransitionRun(IntPtr* data)
         {
-            Debug.Log("[Transition] Received");
-            IntPtr intptr = *data;
-            Debug.Log("[Transition] Converted to IntPtr");
-            Transition* transitionPtr = (Transition*)intptr;
-            Debug.Log("[Transition] Converted to Transition*");
-            ref Transition transition = ref *transitionPtr;
-            Debug.Log("[Transition] Transition reference obtained");
+            ref Transition transition = ref IntPtrPtrTo<Transition>.GetRef(data);
             transition.durationMet.Set(true);
             transition.flaggedForInactive.Set(true);
             TimerStack.StopTimer(transition.timerStackRemovalIndex);
-            Debug.Log("[Transition] Duration Condition Override Set to : " + transition.durationMet.active);
         }
         
         static bool TransitionShouldRun(IntPtr* data) => true;
