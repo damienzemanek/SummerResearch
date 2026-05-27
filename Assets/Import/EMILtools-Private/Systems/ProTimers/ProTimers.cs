@@ -78,8 +78,9 @@ namespace ProTimers
 
         public TimerPredicateInfo info;
         public Predicate predicate;
-        public LogicOperation<IntPtr>* onFinished; 
-        public ref LogicOperation<IntPtr> OnFinished => ref *onFinished;
+        public LogicOperation<IntPtr>* removeSelfOperation; 
+        public ref LogicOperation<IntPtr> OnFinishedRemoveSelf => ref *removeSelfOperation;
+        public Logics<IntPtr> OnFinishedVoidPtrs; 
         public IntPtr triggeredDataPtr;
 
         public static TimerEvent NoData(TimerPredicateInfo _info, Predicate _predicate,
@@ -89,7 +90,7 @@ namespace ProTimers
             {
                 info = _info,
                 predicate = _predicate,
-                onFinished = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
+                removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
                 keepTicking = new ByteBool(keepTickingAfterEventTriggered),
                 triggeredDataPtr = IntPtr.Zero,
             };
@@ -102,7 +103,7 @@ namespace ProTimers
             {
                 info = _info,
                 predicate = _predicate,
-                onFinished = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
+                removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
                 keepTicking = new ByteBool(keepTickingAfterEventTriggered),
                 triggeredDataPtr = dataPtr
             };
@@ -194,9 +195,9 @@ namespace ProTimers
                 timerEvent.info.time += dt;
                 
                 if(!timerEvent.IsTriggered) continue;
-                if (!timerEvent.OnFinished.ShouldRun(in timerEvent.triggeredDataPtr)) continue;
+                if (!timerEvent.OnFinishedRemoveSelf.ShouldRun(in timerEvent.triggeredDataPtr)) continue;
                 if (timerEvent.keepTicking == false) timer->events.GetWrapper(i).Active.Set(false);
-                timerEvent.OnFinished.Run(ref timerEvent.triggeredDataPtr);
+                timerEvent.OnFinishedRemoveSelf.Run(ref timerEvent.triggeredDataPtr);
             }
         }
         

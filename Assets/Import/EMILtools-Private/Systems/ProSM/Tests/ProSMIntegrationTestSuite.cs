@@ -59,4 +59,30 @@ public class ProSMIntegrationTestSuite : MonoBehaviour
     }
     
     // next test is timeddirecttransition executues, then CHANGES the state !
+
+    [Test]
+    public void Test3_TimedDirectTransition_Executes_Then_ChangesState()
+    {
+        TimerStack.Reset();
+        TimerStackLogics.isTesting = true;
+        ProSM<ExampleData> fsm = new ProSM<ExampleData>();
+
+        fsm.Initialize(1);
+        fsm.InitLayer<TestLayerOne, ExampleData>(0);
+        var data = new ExampleData() { x = 1 };
+        fsm.Entry(ref data);
+
+        fsm.AddDirectTimedTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, 1);
+        TimerStack.TickActivesDebug(0.5f);
+        
+        Assert.IsTrue(fsm.layers[0].currentState == (int)TestLayerOne.L1S1);
+        
+        TimerStack.TickActivesDebug(0.6f);
+        
+        
+        Assert.IsTrue(fsm.layers[0].currentState == (int)TestLayerOne.L1S2);
+        
+        fsm.Dispose();
+        TimerStackLogics.isTesting = false;
+    }
 }

@@ -17,9 +17,9 @@ namespace ProSM
     
     public static unsafe class ProSMxProTimersIntegrationLogic
     {
-        public static LogicOperation<IntPtr> TransitionOperation = new (&TransitionRun, &TransitionShouldRun);
         
-        static void TransitionRun(IntPtr* data)
+        public static LogicOperation<IntPtr> RemoveSelfFromTimerStackOperation = new (&RemoveSelfFromTimerStackRun, &AlwaysRuns);
+        static void RemoveSelfFromTimerStackRun(IntPtr* data)
         {
             ref Transition transition = ref IntPtrPtrTo<Transition>.GetRef(data);
             transition.durationMet.Set(true);
@@ -27,7 +27,10 @@ namespace ProSM
             TimerStack.StopTimer(transition.timerStackRemovalIndex);
         }
         
-        static bool TransitionShouldRun(IntPtr* data) => true;
+        
+        
+        static bool AlwaysRuns(IntPtr* data) => true;
+
     }
     
     public static partial class ProSMLogic
@@ -59,14 +62,15 @@ namespace ProSM
                  
                  ref var storedTransition = ref fsm.layers[layerIndex].states[fromIndex].transitions.Get(0);
                  var events = new Data<TimerEvent>(1, Allocator.Temp);
-                 var timerFinishEvent = TimerEvent.WithData(
+                 var removeSelfFromStackEvent = TimerEvent.WithData(
                      new TimerPredicateInfo(0, duration),
                      ProTimersPredicates.IsGreaterThanOrEqualTo(),
-                     ref ProSMxProTimersIntegrationLogic.TransitionOperation,
+                     ref ProSMxProTimersIntegrationLogic.RemoveSelfFromTimerStackOperation,
                      false,
                      (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref storedTransition)
                  );
-                 events.Allocate(ref timerFinishEvent);
+                 
+                 events.Allocate(ref removeSelfFromStackEvent);
                  var timer = new ProTimer(TickMath.Add, ref events);
                  int id = TimerStack.AddTimer(ref timer);
                  storedTransition.timerStackRemovalIndex = id;
