@@ -1,3 +1,4 @@
+using System;
 using ProArchitecture.Data;
 using ProArchitecture.Logic;
 using ProArchitecture.Predicates;
@@ -40,6 +41,9 @@ namespace ProSM
         public Predicate condition;
         public ByteBool hasDurationCondition;
         public ByteBool durationMet;
+        
+        public ByteBool flaggedForInactive;
+        public int timerStackRemovalIndex;
         // mabye in the future make this a logic that does not have to pass in the predicate, but creates it here
         public Transition(short _to, ref Predicate _condition, bool hasDuration)
         {
@@ -47,6 +51,8 @@ namespace ProSM
             condition = _condition;
             hasDurationCondition = new ByteBool(hasDuration);
             durationMet = new ByteBool(false);
+            flaggedForInactive = new ByteBool(false);
+            timerStackRemovalIndex = -1;
         }
     }
 

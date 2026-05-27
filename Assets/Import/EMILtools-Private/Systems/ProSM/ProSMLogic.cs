@@ -79,7 +79,7 @@ namespace ProSM
             if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
                 
-            var transition = new Transition(Unsafe.As<TStates, short>(ref to), ref predicate, true);
+            var transition = new Transition(Unsafe.As<TStates, short>(ref to), ref predicate, false);
             fsm.layers[layerIndex].anyTransitions.Allocate(ref transition, out int _);
         }
 
@@ -100,7 +100,7 @@ namespace ProSM
             if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
 
-            var transition = new Transition((short)toIndex, ref predicate, true);
+            var transition = new Transition((short)toIndex, ref predicate, false);
             fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
         }
             
@@ -158,6 +158,10 @@ namespace ProSM
                 Debug.Log("[DIRECT] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.hasDurationCondition);
                 if (!transition.condition.Evaluate(ref data)) continue;
                 if (transition.hasDurationCondition && !transition.durationMet) continue;
+                if (transition.flaggedForInactive)
+                {
+                    
+                }
                 if(layerdata.currentState == transition.to) continue;
                 nextState = transition.to;
                 return true;

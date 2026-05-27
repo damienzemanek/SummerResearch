@@ -24,7 +24,7 @@ namespace ProArchitecture.Data
     public struct ByteBool
     {
         byte value;
-        bool active => value != 0;
+        public bool active => value != 0;
         public void Set(bool _value) => value = (byte)(_value ? 1 : 0);
         public static implicit operator bool(ByteBool b) => b.active;
         public static implicit operator ByteBool(bool b) => new ByteBool { value = (byte)(b ? 1 : 0) };

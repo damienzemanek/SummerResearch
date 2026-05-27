@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Timers;
 using ProArchitecture.Data;
 using ProArchitecture.Logic;
 using ProArchitecture.Predicates;
@@ -10,11 +11,10 @@ using Unity.Collections;
 
 namespace ProSM
 {
-    
 
+    
     public static unsafe class ProSMxProTimersIntegrationLogic
     {
-        
         public static LogicOperation<IntPtr> TransitionOperation = new (&TransitionRun, &TransitionShouldRun);
         
         static void TransitionRun(IntPtr* data)
@@ -27,7 +27,9 @@ namespace ProSM
             ref Transition transition = ref *transitionPtr;
             Debug.Log("[Transition] Transition reference obtained");
             transition.durationMet.Set(true);
-            Debug.Log("[Transition] Duration Condition Override Set");
+            transition.flaggedForInactive.Set(true);
+            TimerStack.StopTimer(transition.timerStackRemovalIndex);
+            Debug.Log("[Transition] Duration Condition Override Set to : " + transition.durationMet.active);
         }
         
         static bool TransitionShouldRun(IntPtr* data) => true;
@@ -57,20 +59,22 @@ namespace ProSM
             unsafe
             {
                  Predicate AlwaysTrue = new Predicate(&TrueCondition);
-                 var transition = new Transition((short)toIndex, ref AlwaysTrue, false);
-                 fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
-
+                 var tempTransition = new Transition((short)toIndex, ref AlwaysTrue, true);
+                 fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref tempTransition, out int _);
+                 
+                 ref var storedTransition = ref fsm.layers[layerIndex].states[fromIndex].transitions.Get(0);
                  var events = new Data<TimerEvent>(1, Allocator.Temp);
                  var timerFinishEvent = TimerEvent.WithData(
                      new TimerPredicateInfo(0, duration),
                      ProTimersPredicates.IsGreaterThanOrEqualTo(),
                      ref ProSMxProTimersIntegrationLogic.TransitionOperation,
                      false,
-                     (IntPtr)(&transition)
+                     (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref storedTransition)
                  );
                  events.Allocate(ref timerFinishEvent);
                  var timer = new ProTimer(TickMath.Add, ref events);
                  int id = TimerStack.AddTimer(ref timer);
+                 storedTransition.timerStackRemovalIndex = id;
                  TimerStack.StartTimer(id);
             }
         }

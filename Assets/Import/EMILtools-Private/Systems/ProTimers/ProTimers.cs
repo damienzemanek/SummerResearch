@@ -91,7 +91,7 @@ namespace ProTimers
                 predicate = _predicate,
                 onFinished = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
                 keepTicking = new ByteBool(keepTickingAfterEventTriggered),
-                triggeredDataPtr = IntPtr.Zero
+                triggeredDataPtr = IntPtr.Zero,
             };
         }
 
@@ -128,8 +128,8 @@ namespace ProTimers
     public static class TimerStack
     {
         // Timer `Playing` will rely on active state on Data index
-        static Data<ProTimer> timers;
-
+        public static Data<ProTimer> timers;
+        
         static TimerStack() => Reset();
         public static void Reset()
         {
@@ -178,6 +178,7 @@ namespace ProTimers
         public static bool isTesting = false;
         public static float CurrentDeltaTime; // Temporary storage for the batch process
         
+        public static Logics<ProTimer> TickTimerLogics = new(ref tickTimerOperation);
         public static LogicOperation<ProTimer> tickTimerOperation = new(&TickTimerRun, &TickTimerShouldRun);
         static bool TickTimerShouldRun(ProTimer* timer) => true;
         static void TickTimerRun(ProTimer* timer)
@@ -196,10 +197,9 @@ namespace ProTimers
                 if (!timerEvent.OnFinished.ShouldRun(in timerEvent.triggeredDataPtr)) continue;
                 if (timerEvent.keepTicking == false) timer->events.GetWrapper(i).Active.Set(false);
                 timerEvent.OnFinished.Run(ref timerEvent.triggeredDataPtr);
-                
             }
         }
-        public static Logics<ProTimer> TickTimerLogics = new(ref tickTimerOperation);
+        
     }
     
     
