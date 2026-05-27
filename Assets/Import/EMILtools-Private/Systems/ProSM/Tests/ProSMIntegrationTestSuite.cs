@@ -15,6 +15,7 @@ public class ProSMIntegrationTestSuite : MonoBehaviour
     [Test]
     public void Test1_TimedDirectTransition_Initalizes()
     {
+        TimerStack.Reset();
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
 
         fsm.Initialize(2);
@@ -33,6 +34,7 @@ public class ProSMIntegrationTestSuite : MonoBehaviour
     [Test]
     public void Test2_TimedDirectTransition_Executes()
     {
+        TimerStack.Reset();
         TimerStackLogics.isTesting = true;
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
 
@@ -41,12 +43,16 @@ public class ProSMIntegrationTestSuite : MonoBehaviour
         var data = new ExampleData() { x = 1 };
         fsm.Entry(ref data);
 
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
         fsm.AddDirectTimedTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, 1);
-        TimerStackLogics.CurrentDeltaTime = 0.5f;
+        TimerStack.TickActivesDebug(0.5f);
 
+        Assert.IsFalse(fsm.layers[0].states[0].transitions[0].hasDurationCondition);
         
+        TimerStack.TickActivesDebug(0.6f);
         
+        Assert.IsTrue(fsm.layers[0].states[0].transitions[0].hasDurationCondition);
+
+
         fsm.Dispose();
         TimerStackLogics.isTesting = false;
     }

@@ -12,18 +12,22 @@ namespace ProSM
 {
     
 
-    public static unsafe class ProSMxProTimersIntegrationLogic<TData> where TData : unmanaged
+    public static unsafe class ProSMxProTimersIntegrationLogic
     {
         
-        public static LogicOperation<IntPtr> TransitionOperation = 
-            new LogicOperation<IntPtr>(&TransitionRun, &TransitionShouldRun);
+        public static LogicOperation<IntPtr> TransitionOperation = new (&TransitionRun, &TransitionShouldRun);
         
         static void TransitionRun(IntPtr* data)
         {
+            Debug.Log("[Transition] Received");
             IntPtr intptr = *data;
+            Debug.Log("[Transition] Converted to IntPtr");
             Transition* transitionPtr = (Transition*)intptr;
+            Debug.Log("[Transition] Converted to Transition*");
             ref Transition transition = ref *transitionPtr;
-            transition.durationConditionOverride.Set(true);
+            Debug.Log("[Transition] Transition reference obtained");
+            transition.durationMet.Set(true);
+            Debug.Log("[Transition] Duration Condition Override Set");
         }
         
         static bool TransitionShouldRun(IntPtr* data) => true;
@@ -50,7 +54,6 @@ namespace ProSM
             if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
         
-            //var transition = new Transition((short)toIndex, ref predicate);
             unsafe
             {
                  Predicate AlwaysTrue = new Predicate(&TrueCondition);
@@ -58,11 +61,12 @@ namespace ProSM
                  fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
 
                  var events = new Data<TimerEvent>(1, Allocator.Temp);
-                 var timerFinishEvent = TimerEvent.NoData(
+                 var timerFinishEvent = TimerEvent.WithData(
                      new TimerPredicateInfo(0, duration),
                      ProTimersPredicates.IsGreaterThanOrEqualTo(),
-                     ref ProSMxProTimersIntegrationLogic<Transition>.TransitionOperation,
-                     false
+                     ref ProSMxProTimersIntegrationLogic.TransitionOperation,
+                     false,
+                     (IntPtr)(&transition)
                  );
                  events.Allocate(ref timerFinishEvent);
                  var timer = new ProTimer(TickMath.Add, ref events);

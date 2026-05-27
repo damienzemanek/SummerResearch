@@ -143,26 +143,24 @@ namespace ProSM
             for(int i = 0; i < layerdata.anyTransitions.currentSize; i++)
             {
                 ref var transition = ref layerdata.anyTransitions.Get(i);
-                Debug.Log("[ANY] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.durationConditionOverride);
-                if (transition.condition.Evaluate(ref data) && transition.durationConditionOverride)
-                {
-                    if(layerdata.currentState == transition.to) continue;
-                    nextState = transition.to;
-                    return true;
-                }
+                Debug.Log("[ANY] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.hasDurationCondition);
+                if (!transition.condition.Evaluate(ref data)) continue;
+                if (transition.hasDurationCondition && !transition.durationMet) continue;
+                if(layerdata.currentState == transition.to) continue;
+                nextState = transition.to;
+                return true;
             }
                 
             ref var currentStateData = ref layerdata.states.Get(layerdata.currentState);
             for(int i = 0; i < currentStateData.transitions.currentSize; i++)        
             {
                 ref var transition = ref currentStateData.transitions.Get(i);
-                Debug.Log("[DIRECT] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.durationConditionOverride);
-                if (transition.condition.Evaluate(ref data) && transition.durationConditionOverride)
-                {
-                    if(layerdata.currentState == transition.to) continue;
-                    nextState = transition.to;
-                    return true;
-                }
+                Debug.Log("[DIRECT] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.hasDurationCondition);
+                if (!transition.condition.Evaluate(ref data)) continue;
+                if (transition.hasDurationCondition && !transition.durationMet) continue;
+                if(layerdata.currentState == transition.to) continue;
+                nextState = transition.to;
+                return true;
             }
                 
             nextState = NO_NEW_LAYER_FOUND;

@@ -38,13 +38,15 @@ namespace ProSM
     {
         public short to;
         public Predicate condition;
-        public ByteBool durationConditionOverride;
+        public ByteBool hasDurationCondition;
+        public ByteBool durationMet;
         // mabye in the future make this a logic that does not have to pass in the predicate, but creates it here
-        public Transition(short _to, ref Predicate _condition, bool doesNotHaveDuration)
+        public Transition(short _to, ref Predicate _condition, bool hasDuration)
         {
             to = _to;
             condition = _condition;
-            durationConditionOverride = new ByteBool(doesNotHaveDuration);
+            hasDurationCondition = new ByteBool(hasDuration);
+            durationMet = new ByteBool(false);
         }
     }
 

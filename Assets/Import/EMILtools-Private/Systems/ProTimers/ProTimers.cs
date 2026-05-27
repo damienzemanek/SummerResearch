@@ -110,7 +110,15 @@ namespace ProTimers
         
         // Want the callback to do something when it ends
         // Want the callback to inactive itself on the TimerStack
-        public bool IsTriggered => predicate.Evaluate(ref info);
+        public bool IsTriggered
+        {
+            get
+            {
+                bool ret = predicate.Evaluate(ref info);
+                Debug.Log("Predicate Evaluation: " + ret + " time: " + info.time + " triggerTime: " + info.triggerTime + " | time >= triggerTime: " + (info.time >= info.triggerTime) + "");
+                return ret;
+            }
+        }
     }
 
     // Register 
@@ -133,17 +141,20 @@ namespace ProTimers
         {
             timers.Allocate(ref _timer, out var id);
             StopTimer(id);
+            Debug.Log($"Timer Added: {id}");
             return id;
         }
 
         public static void StartTimer(int id)
         {
             timers.GetWrapper(id).Active.Set(true);
+            Debug.Log($"Timer Started: {id}");
         }
 
         public static void StopTimer(int id)
         {
             timers.GetWrapper(id).Active.Set(false);
+            Debug.Log($"Timer Stopped: {id}");
         }
 
         public static void TickActives()
@@ -155,6 +166,7 @@ namespace ProTimers
         {
             TimerStackLogics.CurrentDeltaTime = deltaTime; 
             Batcher.Process(ref timers, TimerStackLogics.TickTimerLogics);
+            Debug.Log($"Ticked: {deltaTime}");
         }
     }
 
