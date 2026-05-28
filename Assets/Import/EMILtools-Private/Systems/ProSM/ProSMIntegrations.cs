@@ -75,7 +75,7 @@ namespace ProSM
                  Predicate AlwaysTrue = new Predicate(&TrueCondition);
                  var tempTransition = new Transition((short)toIndex, ref AlwaysTrue, true);
                  ref var transitions = ref fsm.layers[layerIndex].states[fromIndex].transitions;
-                 transitions.Allocate(ref tempTransition, new ProTimersProSM_TransitionMtd(), out int transitionIndex);
+                 transitions.Allocate(ref tempTransition, out int transitionIndex);
                  transitions.GetWrapper(transitionIndex).MetaDataVolatile.dataFetchLocationOnComplete
                      = (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref dataFetchLocationOnComplete);
 
@@ -91,8 +91,7 @@ namespace ProSM
                      (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref storedTransitionWrapper)
                  );
                  
-                 var timerEventMetaDeta = new TimerEventMetaData();
-                 events.Allocate(ref removeSelfFromStackEvent, ref timerEventMetaDeta);
+                 events.Allocate(ref removeSelfFromStackEvent);
                  var timer = new ProTimer(TickMath.Add, ref events);
                  int id = TimerStack.AddTimer(ref timer);
                  storedTransitionWrapper.MetaDataVolatile.timerStackRemovalIndex = id;

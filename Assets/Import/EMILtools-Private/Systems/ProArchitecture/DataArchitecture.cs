@@ -88,6 +88,7 @@ namespace ProArchitecture.Data
     /// - NativeList<T> mutations use cpu cycles to copy data to and from the stack
     /// - this avoids that and modified the actual using ref T
     /// - uses Object Pooling Defragmentation Strategy to reuse indicies and avoid fragmentation and gc pressure
+    /// - Defualt meta data design pattern: meta data exists universally, only systems that care use it
     /// 
     /// Usage:
     /// int is stable key
@@ -95,9 +96,9 @@ namespace ProArchitecture.Data
     /// owner system must dispose when the system is no longer in use.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct Data<T, TMetaDeta> 
+    public struct Data<T, TMetaData> 
         where T : unmanaged
-        where TMetaDeta : unmanaged
+        where TMetaData : unmanaged
     {
         /// <summary>
         /// For:
@@ -108,9 +109,9 @@ namespace ProArchitecture.Data
         {
             public ByteBool Active;
             T data;
-            TMetaDeta mtd;
+            TMetaData mtd;
             public DataWrapper() => throw new System.NotImplementedException("This struct is only a wrapper for the Data struct, and should not be initialized directly.");
-            public DataWrapper(T getData, TMetaDeta mtd)
+            public DataWrapper(T getData, TMetaData mtd)
             {
                 Active = new ByteBool();
                 Active.Set(true);
@@ -131,11 +132,11 @@ namespace ProArchitecture.Data
                 }
             }
             
-            public ref TMetaDeta MetaDataVolatile
+            public ref TMetaData MetaDataVolatile
             {
                 get
                 {
-                    fixed (TMetaDeta* ptr = &mtd)
+                    fixed (TMetaData* ptr = &mtd)
                         return ref *ptr;
                 }
             }
@@ -157,7 +158,7 @@ namespace ProArchitecture.Data
             Active.Set(true);
         }
 
-        public Data(Data<T, TMetaDeta> tempAllocatedEvents)
+        public Data(Data<T, TMetaData> tempAllocatedEvents)
         {
             nextIndex = tempAllocatedEvents.nextIndex;
             data = tempAllocatedEvents.data;
@@ -171,15 +172,16 @@ namespace ProArchitecture.Data
         /// </summary>
         /// <param name="_data">Data to store.</param>
         /// <returns>Allocated element index.</returns>
-        public int Allocate(ref T _data, ref TMetaDeta _mtd)
+        public int Allocate(ref T _data)
         {
             if (nextIndex >= data.Capacity) data.SetCapacity(math.max(1, data.Capacity * 2));
             
             data.Resize(nextIndex + 1);
-            data[nextIndex] = new DataWrapper(_data, _mtd);
+            var mtd = default(TMetaData);
+            data[nextIndex] = new DataWrapper(_data, mtd);
             return nextIndex++;
         }
-        public void Allocate(ref T _data, TMetaDeta _mtd, out int allocationId) => allocationId = Allocate(ref _data, ref _mtd);
+        public void Allocate(ref T _data, out int allocationId) => allocationId = Allocate(ref _data);
 
         
         /// <summary>
@@ -188,7 +190,7 @@ namespace ProArchitecture.Data
         /// <param name="id"></param>
         /// <param name="newData"></param>
         /// <exception cref="IndexOutOfRangeException"></exception>
-        public void ReAllocateInactive(int id, ref T newData, ref TMetaDeta _mtd)
+        public void ReAllocateInactive(int id, ref T newData, ref TMetaData _mtd)
         {
             if(id >= currentSize) throw new System.IndexOutOfRangeException($"Index {id} out of bounds. Data length is {currentSize}");
             if(data[id].Active) throw new System.IndexOutOfRangeException($"Index {id} Trying to reallocate an active element.");

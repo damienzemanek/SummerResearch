@@ -24,7 +24,7 @@ public class DataTestSuite
         int capacity = 10;
         Data<ExampleData, ExampleMetaData> data = new Data<ExampleData, ExampleMetaData>(capacity, Allocator.Persistent);
         var exampleData = new ExampleData() { x = 1f };
-        data.Allocate(ref exampleData, new ExampleMetaData() { y = 2f }, out int id);
+        data.Allocate(ref exampleData, out int id);
         Assert.AreEqual(0, id);
 
         var allocatedData = data[id];
@@ -42,7 +42,7 @@ public class DataTestSuite
         int capacity = 10;
         Data<ExampleData, ExampleMetaData> data = new Data<ExampleData, ExampleMetaData>(capacity, Allocator.Persistent);
         var exampleData = new ExampleData() { x = 1f };
-        data.Allocate(ref exampleData, new ExampleMetaData() { y = 2f }, out int id);
+        data.Allocate(ref exampleData, out int id);
         Assert.AreEqual(0, id);
 
         var allocatedData = data[id];
@@ -59,7 +59,7 @@ public class DataTestSuite
         int capacity = 10;
         Data<ExampleData, ExampleMetaData> data = new Data<ExampleData, ExampleMetaData>(capacity, Allocator.Persistent);
         var exampleData = new ExampleData() { x = 1f };
-        data.Allocate(ref exampleData, new ExampleMetaData() { y = 2f }, out int id);
+        data.Allocate(ref exampleData, out int id);
         Assert.AreEqual(0, id);
 
         var allocatedData = data[id];
@@ -78,10 +78,10 @@ public class DataTestSuite
         var exampleData1 = new ExampleData() { x = 1f };
         var exampleData2 = new ExampleData() { x = 2f };
         var exampleData3 = new ExampleData() { x = 3f };
-        data.Allocate(ref exampleData1, new ExampleMetaData() { y = 2f }, out _);
-        data.Allocate(ref exampleData2, new ExampleMetaData() { y = 2f }, out _);;
+        data.Allocate(ref exampleData1, out _);
+        data.Allocate(ref exampleData2, out _);;
         // This should trigger SetCapacity(4)
-        data.Allocate(ref exampleData3, new ExampleMetaData() { y = 2f }, out int id); 
+        data.Allocate(ref exampleData3, out int id); 
     
         Assert.AreEqual(2, id);
         Assert.AreEqual(3f, data[2].x);
@@ -95,7 +95,7 @@ public class DataTestSuite
     {
         Data<ExampleData, ExampleMetaData> data = new Data<ExampleData, ExampleMetaData>(10, Allocator.Persistent);
         var exampleData = new ExampleData() { x = 10f };
-        data.Allocate(ref exampleData, new ExampleMetaData() { y = 2f }, out int id);
+        data.Allocate(ref exampleData, out int id);
     
         // Mutate via ref
         ref var storedData = ref data[id];
@@ -113,7 +113,7 @@ public class DataTestSuite
         for(int i = 0; i < 100; i++)
         {
             var exampleData = new ExampleData() { x = (float)i };
-            data.Allocate(ref exampleData, new ExampleMetaData() { y = 2f }, out _);
+            data.Allocate(ref exampleData, out _);
         }
         Assert.AreEqual(100, data.currentSize);
         Assert.AreEqual(99f, data[99].x);

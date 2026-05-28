@@ -153,7 +153,7 @@ namespace ProTimers
 
         public static int AddTimer(ref ProTimer _timer)
         {
-            timers.Allocate(ref _timer, new NoMtd(), out var id);
+            timers.Allocate(ref _timer, out var id);
             StopTimer(id);
             Debug.Log($"Timer Added: {id}");
             return id;

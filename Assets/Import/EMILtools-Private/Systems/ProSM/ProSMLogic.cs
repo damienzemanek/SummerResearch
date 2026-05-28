@@ -34,7 +34,7 @@ namespace ProSM
             for (int i = 0; i < layerCount; i++)
             {
                 var layerData = new LayerData<TData>() { entryState = 0, currentState = 0, previousState = 0 };
-                fsm.layers.Allocate(ref layerData, new LayerMetaData(), out int id);
+                fsm.layers.Allocate(ref layerData, out int id);
             }
         }
             
@@ -61,7 +61,7 @@ namespace ProSM
             for (int i = 0; i < stateCount; i++)
             {
                 var stateData = new StateData<TData>() { transitions = new Data<Transition, ProTimersProSM_TransitionMtd>(10, Allocator.Persistent) };
-                layerData.DataVolatile.states.Allocate(ref stateData, new NoMtd(), out int _);
+                layerData.DataVolatile.states.Allocate(ref stateData, out int _);
             }
         }
             
@@ -81,7 +81,7 @@ namespace ProSM
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
                 
             var transition = new Transition(Unsafe.As<TStates, short>(ref to), ref predicate, false);
-            fsm.layers[layerIndex].anyTransitions.Allocate(ref transition, new ProTimersProSM_TransitionMtd(), out int _);
+            fsm.layers[layerIndex].anyTransitions.Allocate(ref transition, out int _);
         }
 
         public static void AddDirectTransition<TStates, TData>(this ref ProSM<TData> fsm, int layerIndex, TStates from, TStates to, ref Predicate predicate)    
@@ -102,7 +102,7 @@ namespace ProSM
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
 
             var transition = new Transition((short)toIndex, ref predicate, false);
-            fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, new ProTimersProSM_TransitionMtd(), out int _);
+            fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
         }
             
             
