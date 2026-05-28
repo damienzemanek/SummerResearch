@@ -11,11 +11,13 @@ namespace ProArchitecture.Data
 
     public static class Batcher
     {
-        public static void Process<T>(ref Data<T> data, Logics<T> logics) where T : unmanaged
+        public static void Process<T, TMetaDeta>(ref Data<T, TMetaDeta> data, Logics<T> logics) 
+            where T : unmanaged
+            where TMetaDeta : unmanaged
         {
             for(int i = 0; i < data.currentSize; i++)
             {
-                ref Data<T>.DataWrapper element = ref data.GetWrapper(i);
+                ref Data<T, TMetaDeta>.DataWrapper element = ref data.GetWrapper(i);
                 if(!element.Active) continue;
                 logics.TryRunAllSequentially(ref element.DataVolatile);
             }
@@ -76,6 +78,7 @@ namespace ProArchitecture.Data
         }
     }
     
+    public struct NoMtd { }
     
     /// <summary>
     /// What is this?
@@ -92,7 +95,9 @@ namespace ProArchitecture.Data
     /// owner system must dispose when the system is no longer in use.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct Data<T> where T : unmanaged
+    public struct Data<T, TMetaDeta> 
+        where T : unmanaged
+        where TMetaDeta : unmanaged
     {
         /// <summary>
         /// For:
@@ -103,12 +108,14 @@ namespace ProArchitecture.Data
         {
             public ByteBool Active;
             T data;
+            TMetaDeta mtd;
             public DataWrapper() => throw new System.NotImplementedException("This struct is only a wrapper for the Data struct, and should not be initialized directly.");
-            public DataWrapper(T getData)
+            public DataWrapper(T getData, TMetaDeta mtd)
             {
                 Active = new ByteBool();
                 Active.Set(true);
                 this.data = getData;
+                this.mtd = mtd;
             }
 
             /// <summary>
@@ -120,6 +127,15 @@ namespace ProArchitecture.Data
                 get
                 {
                     fixed (T* ptr = &data)
+                        return ref *ptr;
+                }
+            }
+            
+            public ref TMetaDeta MetaDataVolatile
+            {
+                get
+                {
+                    fixed (TMetaDeta* ptr = &mtd)
                         return ref *ptr;
                 }
             }
@@ -141,7 +157,7 @@ namespace ProArchitecture.Data
             Active.Set(true);
         }
 
-        public Data(Data<T> tempAllocatedEvents)
+        public Data(Data<T, TMetaDeta> tempAllocatedEvents)
         {
             nextIndex = tempAllocatedEvents.nextIndex;
             data = tempAllocatedEvents.data;
@@ -155,16 +171,16 @@ namespace ProArchitecture.Data
         /// </summary>
         /// <param name="_data">Data to store.</param>
         /// <returns>Allocated element index.</returns>
-        public int Allocate(ref T _data)
+        public int Allocate(ref T _data, ref TMetaDeta _mtd)
         {
             if (nextIndex >= data.Capacity) data.SetCapacity(math.max(1, data.Capacity * 2));
             
             data.Resize(nextIndex + 1);
-            data[nextIndex] = new DataWrapper(_data);
+            data[nextIndex] = new DataWrapper(_data, _mtd);
             return nextIndex++;
         }
-        public void Allocate(ref T _data, out int allocationId) => allocationId = Allocate(ref _data);
-        
+        public void Allocate(ref T _data, TMetaDeta _mtd, out int allocationId) => allocationId = Allocate(ref _data, ref _mtd);
+
         
         /// <summary>
         /// Used for Object Pooling to reallocate unsued indicies
@@ -172,11 +188,11 @@ namespace ProArchitecture.Data
         /// <param name="id"></param>
         /// <param name="newData"></param>
         /// <exception cref="IndexOutOfRangeException"></exception>
-        public void ReAllocateInactive(int id, ref T newData)
+        public void ReAllocateInactive(int id, ref T newData, ref TMetaDeta _mtd)
         {
             if(id >= currentSize) throw new System.IndexOutOfRangeException($"Index {id} out of bounds. Data length is {currentSize}");
             if(data[id].Active) throw new System.IndexOutOfRangeException($"Index {id} Trying to reallocate an active element.");
-            data[id] = new DataWrapper(newData);
+            data[id] = new DataWrapper(newData, _mtd);
         }
         
         public ref T this[int id] => ref Get(id);
@@ -200,7 +216,7 @@ namespace ProArchitecture.Data
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public ref T Get(int id)
+        ref T Get(int id)
         {
             ref DataWrapper element = ref GetWrapper(id);
             return ref element.DataVolatile;

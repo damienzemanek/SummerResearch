@@ -13,7 +13,8 @@ namespace ProSM
     public static partial class ProSMLogic
     {
         // Initalization
-        public static void Initialize<TData>(this ref ProSM<TData> fsm, int layerCount)  where TData : unmanaged
+        public static void Initialize<TData>(this ref ProSM<TData> fsm, int layerCount) 
+            where TData : unmanaged
         {
             // Ensure TData is blittable (Input Validation)
             if (!UnsafeUtility.IsBlittable<TData>())
@@ -28,12 +29,12 @@ namespace ProSM
                 throw new ArgumentException("layerCount must be greater than 0.");
 
                 
-            fsm.layers = new Data<LayerData<TData>>(layerCount, Allocator.Persistent);
+            fsm.layers = new Data<LayerData<TData>, LayerMetaData>(layerCount, Allocator.Persistent);
             // Creating the layer data
             for (int i = 0; i < layerCount; i++)
             {
                 var layerData = new LayerData<TData>() { entryState = 0, currentState = 0, previousState = 0 };
-                fsm.layers.Allocate(ref layerData, out int id);
+                fsm.layers.Allocate(ref layerData, new LayerMetaData(), out int id);
             }
         }
             
@@ -45,22 +46,22 @@ namespace ProSM
             if (layerIndex < 0 || layerIndex >= fsm.layers.currentSize)
                 throw new IndexOutOfRangeException($"Layer index {layerIndex} is out of bounds (Size: {fsm.layers.currentSize}).");
                 
-            ref var layerData = ref fsm.layers.Get(layerIndex);
+            ref var layerData = ref fsm.layers.GetWrapper(layerIndex);
                 
             // Layer not already initialized (Input Validation)
-            if(layerData.IsInitialized) 
+            if(layerData.MetaDataVolatile.IsInitialized) 
                 throw new InvalidOperationException("Layer already initialized, use another index");
                 
-            layerData.enumTypeId = typeof(TStates).GetHashCode(); // Store type hash
+            layerData.MetaDataVolatile.enumTypeId = typeof(TStates).GetHashCode(); // Store type hash
             var stateCount = Enum.GetValues(typeof(TStates)).Length;
 
             var entryState = Unsafe.As<TStates, int>(ref defaultState);
-            Debug.Log(entryState);
-            layerData.Init(stateCount, entryState);
+            layerData.DataVolatile.Init(stateCount, entryState);
+            layerData.MetaDataVolatile.Init(typeof(TStates).GetHashCode());
             for (int i = 0; i < stateCount; i++)
             {
-                var stateData = new StateData<TData>(i) { transitions = new Data<Transition>(10, Allocator.Persistent) };
-                layerData.states.Allocate(ref stateData, out int _);
+                var stateData = new StateData<TData>() { transitions = new Data<Transition, ProTimersProSM_TransitionMtd>(10, Allocator.Persistent) };
+                layerData.DataVolatile.states.Allocate(ref stateData, new NoMtd(), out int _);
             }
         }
             
@@ -71,23 +72,23 @@ namespace ProSM
             where TData : unmanaged
         {
             // Valid Enum (Input Validation)
-            if (typeof(TStates).GetHashCode() != fsm.layers[layerIndex].enumTypeId)
+            if (typeof(TStates).GetHashCode() != fsm.layers.GetWrapper(layerIndex).MetaDataVolatile.enumTypeId)
                 throw new ArgumentException($"Enum type '{typeof(TStates).Name}' does not match the type used to initialize layer {layerIndex}.");
                 
             // Valid To (Input Validation)
             int toIndex = Unsafe.As<TStates, int>(ref to);
-            if (toIndex < 0 || toIndex >= fsm.layers[layerIndex].states.currentSize)
+            if (toIndex < 0 || toIndex >= fsm.layers.GetWrapper(layerIndex).DataVolatile.states.currentSize)
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
                 
             var transition = new Transition(Unsafe.As<TStates, short>(ref to), ref predicate, false);
-            fsm.layers[layerIndex].anyTransitions.Allocate(ref transition, out int _);
+            fsm.layers[layerIndex].anyTransitions.Allocate(ref transition, new ProTimersProSM_TransitionMtd(), out int _);
         }
 
         public static void AddDirectTransition<TStates, TData>(this ref ProSM<TData> fsm, int layerIndex, TStates from, TStates to, ref Predicate predicate)    
             where TData : unmanaged
         {
             // Valid Enum (Input Validation)
-            if (typeof(TStates).GetHashCode() != fsm.layers[layerIndex].enumTypeId)
+            if (typeof(TStates).GetHashCode() != fsm.layers.GetWrapper(layerIndex).MetaDataVolatile.enumTypeId)
                 throw new ArgumentException($"Enum type '{typeof(TStates).Name}' does not match the type used to initialize layer {layerIndex}.");
 
             // Valid From (Input Validation)
@@ -101,7 +102,7 @@ namespace ProSM
                 throw new ArgumentOutOfRangeException(nameof(to), $"State {to} (index {toIndex}) does not exist in layer {layerIndex}.");
 
             var transition = new Transition((short)toIndex, ref predicate, false);
-            fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, out int _);
+            fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref transition, new ProTimersProSM_TransitionMtd(), out int _);
         }
             
             
@@ -142,7 +143,7 @@ namespace ProSM
                 
             for(int i = 0; i < layerdata.anyTransitions.currentSize; i++)
             {
-                ref var transition = ref layerdata.anyTransitions.Get(i);
+                ref var transition = ref layerdata.anyTransitions[i];
                 Debug.Log("[ANY] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.hasDurationCondition);
                 if (!transition.condition.Evaluate(ref data)) continue;
                 if(layerdata.currentState == transition.to) continue;
@@ -150,10 +151,10 @@ namespace ProSM
                 return true;
             }
                 
-            ref var currentStateData = ref layerdata.states.Get(layerdata.currentState);
+            ref var currentStateData = ref layerdata.states[layerdata.currentState];
             for(int i = 0; i < currentStateData.transitions.currentSize; i++)        
             {
-                ref var transition = ref currentStateData.transitions.Get(i);
+                ref var transition = ref currentStateData.transitions[i];
                 Debug.Log("[DIRECT] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.hasDurationCondition);
                 if (!transition.condition.Evaluate(ref data)) continue;
                 // if (transition.hasDurationCondition) continue;
@@ -177,7 +178,7 @@ namespace ProSM
             
             for(int i = 0; i < layerdata.anyTransitions.currentSize; i++)
             {
-                ref var transition = ref layerdata.anyTransitions.Get(i);
+                ref var transition = ref layerdata.anyTransitions[i];
                 if(!transition.hasDurationCondition) continue;
                 if(!transition.durationMet) continue;
                 if(layerdata.currentState == transition.to) continue;
@@ -185,10 +186,10 @@ namespace ProSM
                 return true;
             }
             
-            ref var currentStateData = ref layerdata.states.Get(layerdata.currentState);
+            ref var currentStateData = ref layerdata.states[layerdata.currentState];
             for(int i = 0; i < currentStateData.transitions.currentSize; i++)        
             {
-                ref var transition = ref currentStateData.transitions.Get(i);
+                ref var transition = ref currentStateData.transitions[i];
                 Debug.Log($"Transition: {i} hasDurationCondition? {transition.hasDurationCondition} durationMet? {transition.durationMet}");
                 if(!transition.hasDurationCondition) continue;
                 Debug.Log("PASS A");
@@ -232,12 +233,12 @@ namespace ProSM
                 
             for(int i = 0; i < fsm.layers.currentSize; i++)
             {
-                ref var layerData = ref fsm.layers.Get(i);
-                if(layerData.IsInitialized == false) 
+                ref var layerData = ref fsm.layers.GetWrapper(i);
+                if(layerData.MetaDataVolatile.IsInitialized == false) 
                     throw new InvalidOperationException($"ProSM Entry failed: Layer {i} has not been initialized. Call InitLayer() before calling Entry().");
-                layerData.currentState = layerData.entryState;
+                layerData.DataVolatile.currentState = layerData.DataVolatile.entryState;
                 fsm.layers[i].timeInState = 0;
-                fsm.layers[i].states[layerData.currentState].OnEnterState.TryRunAllSequentially(ref data);
+                fsm.layers[i].states[layerData.DataVolatile.currentState].OnEnterState.TryRunAllSequentially(ref data);
                 // enter logic using StateLogics
             }
         }

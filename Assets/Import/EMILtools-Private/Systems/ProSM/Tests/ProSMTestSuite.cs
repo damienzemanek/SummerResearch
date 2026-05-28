@@ -37,8 +37,8 @@ public class ProSMTestSuite : MonoBehaviour
         Assert.IsTrue(TestPredicate.IsCreated);
         Assert.AreEqual(2, exampleData.x);
         Assert.IsTrue(fsm.layers.Active);
-        Assert.IsTrue(fsm.layers[0].IsInitialized);
-        Assert.IsTrue(fsm.layers[1].IsInitialized);
+        Assert.IsTrue(fsm.layers.GetWrapper(0).MetaDataVolatile.IsInitialized);
+        Assert.IsTrue(fsm.layers.GetWrapper(1).MetaDataVolatile.IsInitialized);
         Assert.AreEqual(3, fsm.layers[0].states.currentSize);
         Assert.AreEqual(3, fsm.layers[1].states.currentSize);
         

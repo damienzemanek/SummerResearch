@@ -62,15 +62,16 @@ namespace ProTimers
     /// </summary>
     public struct ProTimer
     {
-        public Data<TimerEvent> events;  
+        public Data<TimerEvent, TimerEventMetaData> events;  
         public readonly TickMath math;
         
-        public ProTimer(TickMath _math, ref Data<TimerEvent> _events)
+        public ProTimer(TickMath _math, ref Data<TimerEvent, TimerEventMetaData> _events)
         {
             math = _math;
             events = _events;
         }
     }
+    
     
     
 
@@ -129,6 +130,11 @@ namespace ProTimers
         public void SetFinishedData(ref IntPtr data) => finishedData = data;
     }
 
+    public struct TimerEventMetaData
+    {
+        
+    }
+
     // Register 
     // Idles dont poll
     // Delegate* wrapped struct timer
@@ -136,18 +142,18 @@ namespace ProTimers
     public static class TimerStack
     {
         // Timer `Playing` will rely on active state on Data index
-        public static Data<ProTimer> timers;
+        public static Data<ProTimer, NoMtd> timers;
         
         static TimerStack() => Reset();
         public static void Reset()
         {
             if (timers.Active) timers.Dispose();
-            timers = new Data<ProTimer>(10000, Allocator.Persistent);
+            timers = new Data<ProTimer, NoMtd>(10000, Allocator.Persistent);
         }
 
         public static int AddTimer(ref ProTimer _timer)
         {
-            timers.Allocate(ref _timer, out var id);
+            timers.Allocate(ref _timer, new NoMtd(), out var id);
             StopTimer(id);
             Debug.Log($"Timer Added: {id}");
             return id;

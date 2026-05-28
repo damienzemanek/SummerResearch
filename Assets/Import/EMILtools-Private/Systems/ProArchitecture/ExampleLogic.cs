@@ -15,6 +15,11 @@ namespace ProArchitecture.Logic
         {
             public float x;
         }
+
+        public struct ExampleMetaData
+        {
+            public float y;
+        }
         
         // 2 CONCRETE IMPLEMENTATIONS
         // - Implement your `Operations` statically, auto-validated using `ShouldRun`

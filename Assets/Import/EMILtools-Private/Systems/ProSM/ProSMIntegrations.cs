@@ -18,11 +18,11 @@ namespace ProSM
         static bool AlwaysRuns(IntPtr* data) => true;
         static void Transition(IntPtr* data)
         {
-            ref Transition transition = ref IntPtrPtrTo<Transition>.GetRef(data);
-            ref ProSM<TData> fsm = ref IntPtrTo<ProSM<TData>>.GetRef(ref transition.fsm);
-            bool didTransition = fsm.TryPollDurationTransitionsOnLayer(ref fsm.layers[transition.layer], out int nextState);
-            ref TData fetchDataRef = ref IntPtrTo<TData>.GetRef(ref transition.dataFetchLocationOnComplete);
-            if(didTransition) fsm.TransitionOnLayer_CallExitEnter(transition.layer, nextState, ref fetchDataRef);
+            ref Data<Transition, ProTimersProSM_TransitionMtd>.DataWrapper transition = ref IntPtrPtrTo<Data<Transition, ProTimersProSM_TransitionMtd>.DataWrapper>.GetRef(data);
+            ref ProSM<TData> fsm = ref IntPtrTo<ProSM<TData>>.GetRef(ref transition.MetaDataVolatile.fsm);
+            bool didTransition = fsm.TryPollDurationTransitionsOnLayer(ref fsm.layers[transition.MetaDataVolatile.layer], out int nextState);
+            ref TData fetchDataRef = ref IntPtrTo<TData>.GetRef(ref transition.MetaDataVolatile.dataFetchLocationOnComplete);
+            if(didTransition) fsm.TransitionOnLayer_CallExitEnter(transition.MetaDataVolatile.layer, nextState, ref fetchDataRef);
             else Debug.LogWarning("No Transition Found when Timer transitioned");
             
             Debug.Log("TRANSITIONING");
@@ -35,9 +35,9 @@ namespace ProSM
         public static LogicOperation<IntPtr> RemoveSelfFromTimerStackOperation = new (&RemoveSelfFromTimerStackRun, &AlwaysRuns);
         static void RemoveSelfFromTimerStackRun(IntPtr* data)
         {
-            ref Transition transition = ref IntPtrPtrTo<Transition>.GetRef(data);
-            transition.durationMet.Set(true);
-            TimerStack.StopTimer(transition.timerStackRemovalIndex);
+            ref Data<Transition, ProTimersProSM_TransitionMtd>.DataWrapper transitionWrapper = ref IntPtrPtrTo<Data<Transition, ProTimersProSM_TransitionMtd>.DataWrapper>.GetRef(data);
+            transitionWrapper.DataVolatile.durationMet.Set(true);
+            TimerStack.StopTimer(transitionWrapper.MetaDataVolatile.timerStackRemovalIndex);
         }
         static bool AlwaysRuns(IntPtr* data) => true;
 
@@ -57,7 +57,7 @@ namespace ProSM
         where TData : unmanaged
         {
             // Valid Enum (Input Validation)
-            if (typeof(TStates).GetHashCode() != fsm.layers[layerIndex].enumTypeId)
+            if (typeof(TStates).GetHashCode() != fsm.layers.GetWrapper(layerIndex).MetaDataVolatile.enumTypeId)
                 throw new ArgumentException($"Enum type '{typeof(TStates).Name}' does not match the type used to initialize layer {layerIndex}.");
         
             // Valid From (Input Validation)
@@ -74,27 +74,31 @@ namespace ProSM
             {
                  Predicate AlwaysTrue = new Predicate(&TrueCondition);
                  var tempTransition = new Transition((short)toIndex, ref AlwaysTrue, true);
-                 tempTransition.dataFetchLocationOnComplete = (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref dataFetchLocationOnComplete);
-                 fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref tempTransition, out int transitionIndex);
+                 ref var transitions = ref fsm.layers[layerIndex].states[fromIndex].transitions;
+                 transitions.Allocate(ref tempTransition, new ProTimersProSM_TransitionMtd(), out int transitionIndex);
+                 transitions.GetWrapper(transitionIndex).MetaDataVolatile.dataFetchLocationOnComplete
+                     = (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref dataFetchLocationOnComplete);
+
+                 ref var storedTransitionWrapper = ref fsm.layers[layerIndex].states[fromIndex].transitions.GetWrapper(transitionIndex);
                  
-                 ref var storedTransition = ref fsm.layers[layerIndex].states[fromIndex].transitions.Get(transitionIndex);
-                 var events = new Data<TimerEvent>(1, Allocator.Temp);
+                 var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Temp);
                  var removeSelfFromStackEvent = TimerEvent.WithData(
                      new TimerPredicateInfo(0, duration),
                      ProTimersPredicates.IsGreaterThanOrEqualTo(),
                      ref ProSMxProTimersIntegrationLogic.RemoveSelfFromTimerStackOperation,
                      ref Transitioner<TData>.TransitionOperation,
                      false,
-                     (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref storedTransition)
+                     (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref storedTransitionWrapper)
                  );
                  
-                 events.Allocate(ref removeSelfFromStackEvent);
+                 var timerEventMetaDeta = new TimerEventMetaData();
+                 events.Allocate(ref removeSelfFromStackEvent, ref timerEventMetaDeta);
                  var timer = new ProTimer(TickMath.Add, ref events);
                  int id = TimerStack.AddTimer(ref timer);
-                 storedTransition.timerStackRemovalIndex = id;
+                 storedTransitionWrapper.MetaDataVolatile.timerStackRemovalIndex = id;
                 
-                 storedTransition.layer = layerIndex;
-                 storedTransition.fsm = (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref fsm);
+                 storedTransitionWrapper.MetaDataVolatile.layer = layerIndex;
+                 storedTransitionWrapper.MetaDataVolatile.fsm = (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref fsm);
                 
                  TimerStack.StartTimer(id);
             }

@@ -71,7 +71,7 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
                 return new Logics<BtnData>(buffer.AsReadOnlySpan());
             }
             
-            ref var layer = ref fsm.layers.Get(0);
+            ref var layer = ref fsm.layers[0];
             layer.states[(int)BtnStates.Hover].OnEnterState = enterLogics;
             layer.states[(int)BtnStates.Default].OnEnterState = exitLogics; 
             layer.states[(int)BtnStates.Pressed].OnEnterState = clickLogics;

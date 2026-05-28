@@ -43,7 +43,7 @@ namespace ProSM
     public struct ProSM<TData> where TData : unmanaged
     {
         // make internal later (public rn for testing)
-        public Data<LayerData<TData>> layers;
+        public Data<LayerData<TData>, LayerMetaData> layers;
         
         public void Dispose()
         {

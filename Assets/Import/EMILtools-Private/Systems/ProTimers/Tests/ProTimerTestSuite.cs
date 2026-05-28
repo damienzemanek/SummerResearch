@@ -53,7 +53,7 @@ public class ProTimerTestSuite
         // 1. Manually allocate memory for events
         int eventCount = 1;
         
-        var events = new Data<TimerEvent>(eventCount, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(eventCount, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 5.0f }, 
@@ -63,7 +63,8 @@ public class ProTimerTestSuite
             false
         );
         
-        events.Allocate(ref timerEvent); //
+        var timerEventMetaData = new TimerEventMetaData();
+        events.Allocate(ref timerEvent, ref timerEventMetaData); //
         
 
         // 2. Initialize Timer with pointer
@@ -86,7 +87,7 @@ public class ProTimerTestSuite
     {
         Debug.Log("[DEBUG_LOG] Starting Test_AddAndPlayTimer");
         int eventCount = 0;
-        var events = new Data<TimerEvent>(eventCount, Allocator.Temp);
+        var events = new Data<TimerEvent, TimerEventMetaData>(eventCount, Allocator.Temp);
         
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
 
@@ -109,7 +110,7 @@ public class ProTimerTestSuite
         try {
             // 1. Setup a timer that triggers at 1.0s
             int eventCount = 1;
-            var events = new Data<TimerEvent>(eventCount, Allocator.Persistent);
+            var events = new Data<TimerEvent, TimerEventMetaData>(eventCount, Allocator.Persistent);
             Debug.Log("[DEBUG_LOG] Allocated events Data");
             
             var timerEvent = TimerEvent.NoData(
@@ -121,7 +122,8 @@ public class ProTimerTestSuite
             );
             
             Debug.Log("[DEBUG_LOG] Created TimerEvent");
-            events.Allocate(ref timerEvent);
+            var timerEventMetaData = new TimerEventMetaData();
+            events.Allocate(ref timerEvent, ref timerEventMetaData);
             Debug.Log("[DEBUG_LOG] Allocated event in Data");
 
             ProTimer timer = new ProTimer(TickMath.Add, ref events);
@@ -161,8 +163,9 @@ public class ProTimerTestSuite
     {
         // Add a timer with two events: Event A at 1.0s and Event B at 2.0s
         int eventCount = 2;
-        var events = new Data<TimerEvent>(eventCount, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(eventCount, Allocator.Persistent);
 
+        var timerEventAMetaData = new TimerEventMetaData();
         var eventA = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, 
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
@@ -170,7 +173,7 @@ public class ProTimerTestSuite
             ref TimerStackLogics.NoOp,
             false
             );
-        
+        var timerEventBMetaData = new TimerEventMetaData();
         var eventB = TimerEvent.NoData(   
             new TimerPredicateInfo { time = 0, triggerTime = 2.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
@@ -179,8 +182,8 @@ public class ProTimerTestSuite
             false
             );
 
-        events.Allocate(ref eventA);
-        events.Allocate(ref eventB);
+        events.Allocate(ref eventA, ref timerEventAMetaData);
+        events.Allocate(ref eventB, ref timerEventBMetaData);
 
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
@@ -201,7 +204,7 @@ public class ProTimerTestSuite
     public void Test5_CountdownLogic()
     {
         // Setup 5s countdown
-        var events = new Data<TimerEvent>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 5.0f, triggerTime = 0.0f },
@@ -210,7 +213,8 @@ public class ProTimerTestSuite
             ref TimerStackLogics.NoOp,
             false
         );
-        events.Allocate(ref timerEvent);
+        var timerEventMetaData = new TimerEventMetaData();
+        events.Allocate(ref timerEvent, ref timerEventMetaData);
 
         ProTimer timer = new ProTimer(TickMath.Subtract, ref events);
         int id = TimerStack.AddTimer(ref timer);
@@ -228,7 +232,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test6_PausingAndResuming()
     {
-        var events = new Data<TimerEvent>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
@@ -237,7 +241,8 @@ public class ProTimerTestSuite
             ref TimerStackLogics.NoOp,
             false
         );
-        events.Allocate(ref timerEvent);
+        var timerEventMetaData = new TimerEventMetaData();
+        events.Allocate(ref timerEvent, ref timerEventMetaData);
 
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
@@ -260,7 +265,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test7_ImmediateTrigger()
     {
-        var events = new Data<TimerEvent>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 0.0f },
@@ -269,7 +274,8 @@ public class ProTimerTestSuite
             ref TimerStackLogics.NoOp,
             false
         );
-        events.Allocate(ref timerEvent);
+        var timerEventMetaData = new TimerEventMetaData();
+        events.Allocate(ref timerEvent, ref timerEventMetaData);
 
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
@@ -284,7 +290,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test8_LargeDeltaTimeOvershoot()
     {
-        var events = new Data<TimerEvent>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
@@ -294,7 +300,8 @@ public class ProTimerTestSuite
             false
         );
         
-        events.Allocate(ref timerEvent);
+        var timerEventMetaData = new TimerEventMetaData();
+        events.Allocate(ref timerEvent, ref timerEventMetaData);
 
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
@@ -311,7 +318,7 @@ public class ProTimerTestSuite
     {
         for (int i = 0; i < 10; i++)
         {
-            var events = new Data<TimerEvent>(1, Allocator.Temp);
+            var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Temp);
             
             var timerEvent = TimerEvent.NoData(
                 new TimerPredicateInfo { time = 0, triggerTime = 0.1f },
@@ -320,7 +327,8 @@ public class ProTimerTestSuite
                 ref TimerStackLogics.NoOp,
                 false
             );
-            events.Allocate(ref timerEvent);
+            var timerEventMetaData = new TimerEventMetaData();
+            events.Allocate(ref timerEvent, ref timerEventMetaData);
             ProTimer timer = new ProTimer(TickMath.Add, ref events);
             int id = TimerStack.AddTimer(ref timer);
             Assert.GreaterOrEqual(id, 0);
@@ -331,7 +339,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test10_MultipleTimersIndependentTicking()
     {
-        var events1 = new Data<TimerEvent>(1, Allocator.Persistent);
+        var events1 = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
         var timerEvent1 = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
@@ -339,11 +347,12 @@ public class ProTimerTestSuite
             ref TimerStackLogics.NoOp,
             false
         );
-        events1.Allocate(ref timerEvent1);
+        var timerEventMetaData1 = new TimerEventMetaData();
+        events1.Allocate(ref timerEvent1, ref timerEventMetaData1);
         ProTimer timer1 = new ProTimer(TickMath.Add, ref events1);
         int id1 = TimerStack.AddTimer(ref timer1);
 
-        var events2 = new Data<TimerEvent>(1, Allocator.Persistent);
+        var events2 = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
         var timerEvent2 = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 2.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
@@ -351,7 +360,8 @@ public class ProTimerTestSuite
             ref TimerStackLogics.NoOp,
             false
         );
-        events2.Allocate(ref timerEvent2);
+        var timerEventMetaData2 = new TimerEventMetaData();
+        events2.Allocate(ref timerEvent2, ref timerEventMetaData2);
         ProTimer timer2 = new ProTimer(TickMath.Add, ref events2);
         int id2 = TimerStack.AddTimer(ref timer2);
 
@@ -371,7 +381,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test11_TimerWithNoEvents()
     {
-        var events = new Data<TimerEvent>(0, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(0, Allocator.Persistent);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.StartTimer(id);
@@ -384,7 +394,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test12_MixedOneShotAndContinuousEvents()
     {
-        var events = new Data<TimerEvent>(2, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(2, Allocator.Persistent);
         
         // One-shot
         var oneShot = TimerEvent.NoData(
@@ -394,6 +404,7 @@ public class ProTimerTestSuite
             ref TimerStackLogics.NoOp,
             false
         );
+        var oneShotMetaData = new TimerEventMetaData();
         
         // Continuous
         var continuous = TimerEvent.NoData(
@@ -403,9 +414,10 @@ public class ProTimerTestSuite
             ref TimerStackLogics.NoOp,
             true
         );
+        var continuousMetaData = new TimerEventMetaData();
 
-        events.Allocate(ref oneShot);
-        events.Allocate(ref continuous);
+        events.Allocate(ref oneShot, ref oneShotMetaData);
+        events.Allocate(ref continuous, ref continuousMetaData);
 
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
@@ -424,7 +436,7 @@ public class ProTimerTestSuite
     [Test]
     public unsafe void Test13_TriggeredDataPtrMutation()
     {
-        var events = new Data<TimerEvent>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
         int testData = 10;
         
         var timerEvent = TimerEvent.WithData(
@@ -435,10 +447,11 @@ public class ProTimerTestSuite
             false,
             (IntPtr)(&testData)
         );
+        var timerEventMetaData = new TimerEventMetaData();
         
         Debug.Log("IntPtr is : " + timerEvent.finishedData);
         
-        events.Allocate(ref timerEvent);
+        events.Allocate(ref timerEvent, ref timerEventMetaData);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.StartTimer(id);
@@ -453,7 +466,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test14_NegativeDeltaTimeHandling()
     {
-        var events = new Data<TimerEvent>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
@@ -461,7 +474,8 @@ public class ProTimerTestSuite
             ref TimerStackLogics.NoOp,
             false
         );
-        events.Allocate(ref timerEvent);
+        var timerEventMetaData = new TimerEventMetaData();
+        events.Allocate(ref timerEvent, ref timerEventMetaData);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.StartTimer(id);

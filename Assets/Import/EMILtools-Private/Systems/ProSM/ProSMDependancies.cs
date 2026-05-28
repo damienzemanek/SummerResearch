@@ -11,8 +11,7 @@ namespace ProSM
     {
         const int TRANSITIONS_SIZE = 50;
         
-        public int state;
-        public Data<Transition> transitions;
+        public Data<Transition, ProTimersProSM_TransitionMtd> transitions;
         
         public Logics<TickLogic<TData>.TickLogicData<TData>> OnUpdate;
         public Logics<TickLogic<TData>.TickLogicData<TData>> OnFixedUpdate;
@@ -21,10 +20,9 @@ namespace ProSM
         public Logics<TData> OnEnterState;  
         public Logics<TData> OnExitState;
         
-        public StateData(int _state)
+        public StateData()
         {
-            state = _state;
-            transitions = new Data<Transition>(TRANSITIONS_SIZE, Allocator.Persistent);
+            transitions = new Data<Transition, ProTimersProSM_TransitionMtd>(TRANSITIONS_SIZE, Allocator.Persistent);
             
             OnUpdate = default;
             OnFixedUpdate = default;
@@ -33,22 +31,16 @@ namespace ProSM
             OnExitState = default;
         }
     }
+
     
 
-    public unsafe struct Transition
+    public struct Transition
     {
         public short to;
         public Predicate condition;
         public ByteBool hasDurationCondition;
         public ByteBool durationMet;
         
-        // I should make a metadata storage that lives on TimerStack that can access this
-        public int timerStackRemovalIndex;
-        
-        // Same with this one, but for LayerData
-        public int layer;
-        public IntPtr dataFetchLocationOnComplete;
-        public IntPtr fsm;
         // mabye in the future make this a logic that does not have to pass in the predicate, but creates it here
         public Transition(short _to, ref Predicate _condition, bool hasDuration)
         {
@@ -56,10 +48,22 @@ namespace ProSM
             condition = _condition;
             hasDurationCondition = new ByteBool(hasDuration);
             durationMet = new ByteBool(false);
+        }
+    }
+    public struct TransitionMtd { }
+    public struct ProTimersProSM_TransitionMtd
+    {
+        public int timerStackRemovalIndex;
+        public int layer;
+        public IntPtr dataFetchLocationOnComplete;
+        public IntPtr fsm;
+        
+        public ProTimersProSM_TransitionMtd() 
+        {
             timerStackRemovalIndex = -1;
             layer = -1;
-            fsm = IntPtr.Zero;
             dataFetchLocationOnComplete = IntPtr.Zero;
+            fsm = IntPtr.Zero;
         }
     }
 
@@ -69,31 +73,36 @@ namespace ProSM
     {
         const int ANY_TRANSITIONS_SIZE = 50;
         const int NOT_ENTERED_YET = -1;
-
-        public byte isInitialized;
-        public bool IsInitialized => isInitialized != 0;
+        
         public int entryState;
         public int currentState;
         public int previousState;
         
-        public Data<StateData<TData>> states;
-        public Data<Transition> anyTransitions;
-
-        public long enumTypeId; // hash of enum
+        public Data<StateData<TData>, NoMtd> states;
+        public Data<Transition, ProTimersProSM_TransitionMtd> anyTransitions;
 
         public float timeInState;
 
-        public byte transitionEventFlagged;
-        public bool IsTransitionEventFlagged => transitionEventFlagged != 0;
-
         public void Init(int statesSize, int _entryState = 0)
         {
-            states = new Data<StateData<TData>>(statesSize, Allocator.Persistent);
-            anyTransitions = new Data<Transition>(ANY_TRANSITIONS_SIZE, Allocator.Persistent);
-            isInitialized = 1;
+            states = new Data<StateData<TData>, NoMtd>(statesSize, Allocator.Persistent);
+            anyTransitions = new Data<Transition, ProTimersProSM_TransitionMtd>(ANY_TRANSITIONS_SIZE, Allocator.Persistent);
             entryState = _entryState;
             currentState = NOT_ENTERED_YET; // Call Entry() to set this
             timeInState = 0;
+        }
+    }
+
+    public struct LayerMetaData
+    {
+        public byte isInitialized;
+        public bool IsInitialized => isInitialized != 0;
+        public long enumTypeId; // hash of enum
+
+        public void Init(long _enumTypeId)
+        {
+            isInitialized = 1;
+            enumTypeId = _enumTypeId;
         }
     }
     
