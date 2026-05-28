@@ -62,10 +62,10 @@ namespace ProTimers
     /// </summary>
     public struct ProTimer
     {
-        public Data<TimerEvent, TimerEventMetaData> events;  
+        public Data<TimerEvent, NoMtd> events;  
         public readonly TickMath math;
         
-        public ProTimer(TickMath _math, ref Data<TimerEvent, TimerEventMetaData> _events)
+        public ProTimer(TickMath _math, ref Data<TimerEvent, NoMtd> _events)
         {
             math = _math;
             events = _events;
@@ -129,11 +129,7 @@ namespace ProTimers
         }
         public void SetFinishedData(ref IntPtr data) => finishedData = data;
     }
-
-    public struct TimerEventMetaData
-    {
-        
-    }
+    
 
     // Register 
     // Idles dont poll

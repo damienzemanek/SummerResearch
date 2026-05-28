@@ -53,7 +53,7 @@ public class ProTimerTestSuite
         // 1. Manually allocate memory for events
         int eventCount = 1;
         
-        var events = new Data<TimerEvent, TimerEventMetaData>(eventCount, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(eventCount, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 5.0f }, 
@@ -86,7 +86,7 @@ public class ProTimerTestSuite
     {
         Debug.Log("[DEBUG_LOG] Starting Test_AddAndPlayTimer");
         int eventCount = 0;
-        var events = new Data<TimerEvent, TimerEventMetaData>(eventCount, Allocator.Temp);
+        var events = new Data<TimerEvent, NoMtd>(eventCount, Allocator.Temp);
         
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
 
@@ -109,7 +109,7 @@ public class ProTimerTestSuite
         try {
             // 1. Setup a timer that triggers at 1.0s
             int eventCount = 1;
-            var events = new Data<TimerEvent, TimerEventMetaData>(eventCount, Allocator.Persistent);
+            var events = new Data<TimerEvent, NoMtd>(eventCount, Allocator.Persistent);
             Debug.Log("[DEBUG_LOG] Allocated events Data");
             
             var timerEvent = TimerEvent.NoData(
@@ -161,7 +161,7 @@ public class ProTimerTestSuite
     {
         // Add a timer with two events: Event A at 1.0s and Event B at 2.0s
         int eventCount = 2;
-        var events = new Data<TimerEvent, TimerEventMetaData>(eventCount, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(eventCount, Allocator.Persistent);
 
         var eventA = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, 
@@ -200,7 +200,7 @@ public class ProTimerTestSuite
     public void Test5_CountdownLogic()
     {
         // Setup 5s countdown
-        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(1, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 5.0f, triggerTime = 0.0f },
@@ -227,7 +227,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test6_PausingAndResuming()
     {
-        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(1, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
@@ -259,7 +259,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test7_ImmediateTrigger()
     {
-        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(1, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 0.0f },
@@ -283,7 +283,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test8_LargeDeltaTimeOvershoot()
     {
-        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(1, Allocator.Persistent);
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
@@ -310,7 +310,7 @@ public class ProTimerTestSuite
     {
         for (int i = 0; i < 10; i++)
         {
-            var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Temp);
+            var events = new Data<TimerEvent, NoMtd>(1, Allocator.Temp);
             
             var timerEvent = TimerEvent.NoData(
                 new TimerPredicateInfo { time = 0, triggerTime = 0.1f },
@@ -330,7 +330,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test10_MultipleTimersIndependentTicking()
     {
-        var events1 = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
+        var events1 = new Data<TimerEvent, NoMtd>(1, Allocator.Persistent);
         var timerEvent1 = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
@@ -342,7 +342,7 @@ public class ProTimerTestSuite
         ProTimer timer1 = new ProTimer(TickMath.Add, ref events1);
         int id1 = TimerStack.AddTimer(ref timer1);
 
-        var events2 = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
+        var events2 = new Data<TimerEvent, NoMtd>(1, Allocator.Persistent);
         var timerEvent2 = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 2.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
@@ -370,7 +370,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test11_TimerWithNoEvents()
     {
-        var events = new Data<TimerEvent, TimerEventMetaData>(0, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(0, Allocator.Persistent);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
         int id = TimerStack.AddTimer(ref timer);
         TimerStack.StartTimer(id);
@@ -383,7 +383,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test12_MixedOneShotAndContinuousEvents()
     {
-        var events = new Data<TimerEvent, TimerEventMetaData>(2, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(2, Allocator.Persistent);
         
         // One-shot
         var oneShot = TimerEvent.NoData(
@@ -423,7 +423,7 @@ public class ProTimerTestSuite
     [Test]
     public unsafe void Test13_TriggeredDataPtrMutation()
     {
-        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(1, Allocator.Persistent);
         int testData = 10;
         
         var timerEvent = TimerEvent.WithData(
@@ -452,7 +452,7 @@ public class ProTimerTestSuite
     [Test]
     public void Test14_NegativeDeltaTimeHandling()
     {
-        var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Persistent);
+        var events = new Data<TimerEvent, NoMtd>(1, Allocator.Persistent);
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),

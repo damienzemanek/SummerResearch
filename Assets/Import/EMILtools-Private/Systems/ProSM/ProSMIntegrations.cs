@@ -81,7 +81,7 @@ namespace ProSM
 
                  ref var storedTransitionWrapper = ref fsm.layers[layerIndex].states[fromIndex].transitions.GetWrapper(transitionIndex);
                  
-                 var events = new Data<TimerEvent, TimerEventMetaData>(1, Allocator.Temp);
+                 var events = new Data<TimerEvent, NoMtd>(1, Allocator.Temp);
                  var removeSelfFromStackEvent = TimerEvent.WithData(
                      new TimerPredicateInfo(0, duration),
                      ProTimersPredicates.IsGreaterThanOrEqualTo(),
