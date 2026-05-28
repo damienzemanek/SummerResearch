@@ -51,6 +51,7 @@ namespace ProArchitecture.Logic
     
     public readonly unsafe struct Logics<T> where T : unmanaged
     {
+        public bool hasOperations => count > 0;
         public readonly LogicOperation<T>* operations;
         public readonly int count;
 

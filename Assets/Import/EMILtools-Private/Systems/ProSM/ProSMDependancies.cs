@@ -35,15 +35,20 @@ namespace ProSM
     }
     
 
-    public struct Transition
+    public unsafe struct Transition
     {
         public short to;
         public Predicate condition;
         public ByteBool hasDurationCondition;
         public ByteBool durationMet;
         
-        public ByteBool flaggedForInactive;
+        // I should make a metadata storage that lives on TimerStack that can access this
         public int timerStackRemovalIndex;
+        
+        // Same with this one, but for LayerData
+        public int layer;
+        public IntPtr dataFetchLocationOnComplete;
+        public IntPtr fsm;
         // mabye in the future make this a logic that does not have to pass in the predicate, but creates it here
         public Transition(short _to, ref Predicate _condition, bool hasDuration)
         {
@@ -51,8 +56,10 @@ namespace ProSM
             condition = _condition;
             hasDurationCondition = new ByteBool(hasDuration);
             durationMet = new ByteBool(false);
-            flaggedForInactive = new ByteBool(false);
             timerStackRemovalIndex = -1;
+            layer = -1;
+            fsm = IntPtr.Zero;
+            dataFetchLocationOnComplete = IntPtr.Zero;
         }
     }
 

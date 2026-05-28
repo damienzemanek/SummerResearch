@@ -32,6 +32,16 @@ namespace ProArchitecture.Data
             return ref t;
         }
     }
+
+    public static unsafe class IntPtrTo<T> where T : unmanaged
+    {
+        public static ref T GetRef(ref IntPtr data)
+        {
+            T* tptr = (T*)data;
+            ref T t = ref *tptr;
+            return ref t;
+        }
+    }
     
     public struct ByteBool
     {

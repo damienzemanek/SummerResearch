@@ -145,7 +145,6 @@ namespace ProSM
                 ref var transition = ref layerdata.anyTransitions.Get(i);
                 Debug.Log("[ANY] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.hasDurationCondition);
                 if (!transition.condition.Evaluate(ref data)) continue;
-                if (transition.hasDurationCondition && !transition.durationMet) continue;
                 if(layerdata.currentState == transition.to) continue;
                 nextState = transition.to;
                 return true;
@@ -157,11 +156,11 @@ namespace ProSM
                 ref var transition = ref currentStateData.transitions.Get(i);
                 Debug.Log("[DIRECT] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.hasDurationCondition);
                 if (!transition.condition.Evaluate(ref data)) continue;
-                if (transition.hasDurationCondition && !transition.durationMet) continue;
-                if (transition.flaggedForInactive)
-                {
-                    
-                }
+                // if (transition.hasDurationCondition) continue;
+                // if (transition.flaggedForInactive)
+                // {
+                //     
+                // }
                 if(layerdata.currentState == transition.to) continue;
                 nextState = transition.to;
                 return true;
@@ -170,7 +169,41 @@ namespace ProSM
             nextState = NO_NEW_LAYER_FOUND;
             return false;
         }
+        
+        public static bool TryPollDurationTransitionsOnLayer<TData>(this ref ProSM<TData> fsm, ref LayerData<TData> layerdata, out int nextState)
+            where TData : unmanaged
+        {
+            const int NO_NEW_LAYER_FOUND = -1;
             
+            for(int i = 0; i < layerdata.anyTransitions.currentSize; i++)
+            {
+                ref var transition = ref layerdata.anyTransitions.Get(i);
+                if(!transition.hasDurationCondition) continue;
+                if(!transition.durationMet) continue;
+                if(layerdata.currentState == transition.to) continue;
+                nextState = transition.to;
+                return true;
+            }
+            
+            ref var currentStateData = ref layerdata.states.Get(layerdata.currentState);
+            for(int i = 0; i < currentStateData.transitions.currentSize; i++)        
+            {
+                ref var transition = ref currentStateData.transitions.Get(i);
+                Debug.Log($"Transition: {i} hasDurationCondition? {transition.hasDurationCondition} durationMet? {transition.durationMet}");
+                if(!transition.hasDurationCondition) continue;
+                Debug.Log("PASS A");
+                if(!transition.durationMet) continue;
+                Debug.Log("PASS B");
+                if(layerdata.currentState == transition.to) continue;
+                nextState = transition.to;
+                Debug.Log("PASS C");
+                return true;
+            }
+                
+            nextState = NO_NEW_LAYER_FOUND;
+            return false;
+        }
+        
 
         public static void TransitionOnLayer_CallExitEnter<TData>(this ref ProSM<TData> fsm, int layer, int nextState, ref TData data)
             where TData : unmanaged

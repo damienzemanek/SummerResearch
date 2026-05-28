@@ -23,7 +23,7 @@ public class ProTimerTestSuite
         }
         static bool SomeLogicShouldRun(IntPtr* ptr) => true;
         public static LogicOperation<IntPtr> TriggeredOperation = new(&SomeLogicRun, &SomeLogicShouldRun);
-
+    
         static void MutateDataLogicRun(IntPtr* ptr)
         {
             Debug.Log("[DEBUG_LOG] Inside MutateDataLogicRun");
@@ -59,6 +59,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 5.0f }, 
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
         );
         
@@ -115,6 +116,7 @@ public class ProTimerTestSuite
                 new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, 
                 ProTimersPredicates.IsGreaterThanOrEqualTo(),
                 ref SomeTriggerLogic.TriggeredOperation,
+                ref TimerStackLogics.NoOp,
                 false
             );
             
@@ -165,6 +167,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, 
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
             );
         
@@ -172,6 +175,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 2.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
             );
 
@@ -203,6 +207,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 5.0f, triggerTime = 0.0f },
             ProTimersPredicates.IsLessThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
         );
         events.Allocate(ref timerEvent);
@@ -229,6 +234,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
         );
         events.Allocate(ref timerEvent);
@@ -260,6 +266,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 0.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
         );
         events.Allocate(ref timerEvent);
@@ -283,6 +290,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
         );
         
@@ -309,6 +317,7 @@ public class ProTimerTestSuite
                 new TimerPredicateInfo { time = 0, triggerTime = 0.1f },
                 ProTimersPredicates.IsGreaterThanOrEqualTo(),
                 ref SomeTriggerLogic.TriggeredOperation,
+                ref TimerStackLogics.NoOp,
                 false
             );
             events.Allocate(ref timerEvent);
@@ -327,6 +336,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
         );
         events1.Allocate(ref timerEvent1);
@@ -338,6 +348,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 2.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
         );
         events2.Allocate(ref timerEvent2);
@@ -380,6 +391,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
         );
         
@@ -388,6 +400,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             true
         );
 
@@ -418,11 +431,12 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 0.5f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.MutateDataOperation,
+            ref TimerStackLogics.NoOp,
             false,
             (IntPtr)(&testData)
         );
         
-        Debug.Log("IntPtr is : " + timerEvent.triggeredDataPtr);
+        Debug.Log("IntPtr is : " + timerEvent.finishedData);
         
         events.Allocate(ref timerEvent);
         ProTimer timer = new ProTimer(TickMath.Add, ref events);
@@ -444,6 +458,7 @@ public class ProTimerTestSuite
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
             ProTimersPredicates.IsGreaterThanOrEqualTo(),
             ref SomeTriggerLogic.TriggeredOperation,
+            ref TimerStackLogics.NoOp,
             false
         );
         events.Allocate(ref timerEvent);

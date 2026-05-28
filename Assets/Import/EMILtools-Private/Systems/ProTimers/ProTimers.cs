@@ -71,6 +71,8 @@ namespace ProTimers
             events = _events;
         }
     }
+    
+    
 
     public unsafe struct TimerEvent
     {
@@ -80,32 +82,36 @@ namespace ProTimers
         public Predicate predicate;
         public LogicOperation<IntPtr>* removeSelfOperation; 
         public ref LogicOperation<IntPtr> OnFinishedRemoveSelf => ref *removeSelfOperation;
-        public Logics<IntPtr> OnFinishedVoidPtrs; 
-        public IntPtr triggeredDataPtr;
+        
+        public LogicOperation<IntPtr>* onFinishedOperation; 
+        public ref LogicOperation<IntPtr> OnFinishedOperation => ref *onFinishedOperation;   
+        public IntPtr finishedData;
 
         public static TimerEvent NoData(TimerPredicateInfo _info, Predicate _predicate,
-            ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered)
+            ref LogicOperation<IntPtr> _removeSelfFromTimerStack, ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered)
         {
             return new TimerEvent()
             {
                 info = _info,
                 predicate = _predicate,
-                removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
+                removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _removeSelfFromTimerStack),
+                onFinishedOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
                 keepTicking = new ByteBool(keepTickingAfterEventTriggered),
-                triggeredDataPtr = IntPtr.Zero,
+                finishedData = IntPtr.Zero
             };
         }
 
         public static TimerEvent WithData(TimerPredicateInfo _info, Predicate _predicate,
-            ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered, IntPtr dataPtr)
+            ref LogicOperation<IntPtr> _removeSelfFromTimerStack, ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered, IntPtr dataPtr)
         {
             return new TimerEvent()
             {
                 info = _info,
                 predicate = _predicate,
-                removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
+                removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _removeSelfFromTimerStack),
+                onFinishedOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
                 keepTicking = new ByteBool(keepTickingAfterEventTriggered),
-                triggeredDataPtr = dataPtr
+                finishedData = dataPtr
             };
         }
         
@@ -120,6 +126,7 @@ namespace ProTimers
                 return ret;
             }
         }
+        public void SetFinishedData(ref IntPtr data) => finishedData = data;
     }
 
     // Register 
@@ -176,6 +183,11 @@ namespace ProTimers
     // for each `TimerEvent` in the ProTimer
     public static unsafe class TimerStackLogics
     {
+        public static LogicOperation<IntPtr> NoOp = new(&NoneOperationRun, &NoneOperationShouldRun);
+        static void NoneOperationRun(IntPtr* ptr) {}
+        static bool NoneOperationShouldRun(IntPtr* ptr) => false;
+        
+        
         public static bool isTesting = false;
         public static float CurrentDeltaTime; // Temporary storage for the batch process
         
@@ -195,9 +207,10 @@ namespace ProTimers
                 timerEvent.info.time += dt;
                 
                 if(!timerEvent.IsTriggered) continue;
-                if (!timerEvent.OnFinishedRemoveSelf.ShouldRun(in timerEvent.triggeredDataPtr)) continue;
+                if (!timerEvent.OnFinishedRemoveSelf.ShouldRun(in timerEvent.finishedData)) continue;
                 if (timerEvent.keepTicking == false) timer->events.GetWrapper(i).Active.Set(false);
-                timerEvent.OnFinishedRemoveSelf.Run(ref timerEvent.triggeredDataPtr);
+                timerEvent.OnFinishedRemoveSelf.Run(ref timerEvent.finishedData);
+                timerEvent.OnFinishedOperation.Run(ref timerEvent.finishedData);
             }
         }
         

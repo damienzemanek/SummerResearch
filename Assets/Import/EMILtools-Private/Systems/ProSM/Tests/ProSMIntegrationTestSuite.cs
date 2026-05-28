@@ -21,9 +21,8 @@ public class ProSMIntegrationTestSuite : MonoBehaviour
         fsm.Initialize(2);
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         fsm.InitLayer<TestLayerTwo, ExampleData>(1);
-        var exampleData = new ExampleData() { x = 2 };
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
-        fsm.AddDirectTimedTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S2, 1);
+        var data = new ExampleData() { x = 2 };
+        fsm.AddDirectTimedTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S2, ref data, 1);
         
         Assert.IsTrue(fsm.layers[0].states[0].transitions.Active);
         Assert.AreEqual(1, fsm.layers[0].states[0].transitions.currentSize);
@@ -43,7 +42,7 @@ public class ProSMIntegrationTestSuite : MonoBehaviour
         var data = new ExampleData() { x = 1 };
         fsm.Entry(ref data);
 
-        fsm.AddDirectTimedTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, 1);
+        fsm.AddDirectTimedTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, ref data, 1);
         TimerStack.TickActivesDebug(0.5f);
 
         Assert.IsFalse(fsm.layers[0].states[0].transitions[0].durationMet.active);
@@ -72,7 +71,7 @@ public class ProSMIntegrationTestSuite : MonoBehaviour
         var data = new ExampleData() { x = 1 };
         fsm.Entry(ref data);
 
-        fsm.AddDirectTimedTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, 1);
+        fsm.AddDirectTimedTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, ref data,1);
         TimerStack.TickActivesDebug(0.5f);
         
         Assert.IsTrue(fsm.layers[0].currentState == (int)TestLayerOne.L1S1);
