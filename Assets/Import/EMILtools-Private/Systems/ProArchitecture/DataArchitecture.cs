@@ -57,13 +57,13 @@ namespace ProArchitecture.Data
     public unsafe struct RefToStatic<T> where T : unmanaged
     {
         T* ptr;
-        public ref T Ref => ref *ptr;
+        public ref T StaticRef => ref *ptr;
         public RefToStatic(ref T value) => ptr = (T*)Unsafe.AsPointer(ref value);
     }
 
     public static class PredicateExtensions
     {
-        public static bool Evaluate<T>(this ref RefToStatic<Predicate> pred, ref T data) where T : unmanaged => pred.Ref.Evaluate(ref data);
+        public static bool Evaluate<T>(this ref RefToStatic<Predicate> pred, ref T data) where T : unmanaged => pred.StaticRef.Evaluate(ref data);
     }
 
     
@@ -151,7 +151,7 @@ namespace ProArchitecture.Data
             nextIndex = 0;
             data = new UnsafeList<DataWrapper>(capacity, allocator);
             Active = new ByteBool();
-            Active.Set(true);
+            Active.Set(false);
         }
 
         public Data(Data<T> tempAllocatedEvents)

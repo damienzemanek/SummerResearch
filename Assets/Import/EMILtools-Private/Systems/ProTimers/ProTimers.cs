@@ -72,54 +72,57 @@ namespace ProTimers
     {
         public Data<TimerEvent> events;  
         public readonly TickMath math;
+        public int removalIndex;
         
         public ProTimer(TickMath _math, ref Data<TimerEvent> _events)
         {
             math = _math;
             events = _events;
+            removalIndex = -99;
         }
     }
-    
-    
 
+    public enum TimerEventType
+    {
+        OneShotTimerKeepsTicking,
+        Repeating,
+        StopTimer
+    }
+    
     public unsafe struct TimerEvent
     {
-        public ByteBool keepTicking;
-
+        public TimerEventType type;
         public TimerPredicateInfo info;
         public RefToStatic<Predicate> predicate;
-        public LogicOperation<IntPtr>* removeSelfOperation; 
-        public ref LogicOperation<IntPtr> OnFinishedRemoveSelf => ref *removeSelfOperation;
         
         public LogicOperation<IntPtr>* onFinishedOperation; 
-        public ref LogicOperation<IntPtr> OnFinishedOperation => ref *onFinishedOperation;   
+        public ref LogicOperation<IntPtr> OnFinishedOperation => ref *onFinishedOperation;
+        
         public IntPtr finishedData;
 
         public static TimerEvent NoData(TimerPredicateInfo _info, ref Predicate _predicate,
-            ref LogicOperation<IntPtr> _removeSelfFromTimerStack, ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered)
+            ref LogicOperation<IntPtr> _onFinished, TimerEventType _type)
         {
             return new TimerEvent()
             {
                 info = _info,
                 predicate = new RefToStatic<Predicate>(ref _predicate),
-                removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _removeSelfFromTimerStack),
                 onFinishedOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
-                keepTicking = new ByteBool(keepTickingAfterEventTriggered),
-                finishedData = IntPtr.Zero
+                type = _type,
+                finishedData = IntPtr.Zero,
             };
         }
 
         public static TimerEvent WithData(TimerPredicateInfo _info, ref Predicate _predicate,
-            ref LogicOperation<IntPtr> _removeSelfFromTimerStack, ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered, IntPtr dataPtr)
+            ref LogicOperation<IntPtr> _onFinished, IntPtr dataPtr, TimerEventType _type)
         {
             return new TimerEvent()
             {
                 info = _info,
                 predicate = new RefToStatic<Predicate>(ref _predicate),
-                removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _removeSelfFromTimerStack),
                 onFinishedOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
-                keepTicking = new ByteBool(keepTickingAfterEventTriggered),
-                finishedData = dataPtr
+                type = _type,
+                finishedData = dataPtr,
             };
         }
         
@@ -153,10 +156,11 @@ namespace ProTimers
             timers = new Data<ProTimer>(10000, Allocator.Persistent);
         }
 
-        public static int AddTimer(ref ProTimer _timer)
+        public static int AddTimer(ref ProTimer tempTimer)
         {
-            timers.Allocate(ref _timer, out var id);
-            StopTimer(id);
+            timers.Allocate(ref tempTimer, out var id);
+            timers[id].removalIndex = id; // has to be the indexed timer not the temp timer
+
             Debug.Log($"Timer Added: {id}");
             return id;
         }
@@ -191,9 +195,6 @@ namespace ProTimers
     // for each `TimerEvent` in the ProTimer
     public static unsafe class TimerStackLogics
     {
-        public static LogicOperation<IntPtr> NoOp = new(&NoneOperationRun, &NoneOperationShouldRun);
-        static void NoneOperationRun(IntPtr* ptr) {}
-        static bool NoneOperationShouldRun(IntPtr* ptr) => false;
         
         
         public static bool isTesting = false;
@@ -205,21 +206,28 @@ namespace ProTimers
         static void TickTimerRun(ProTimer* timer)
         {
             float dt = isTesting ? CurrentDeltaTime : Time.deltaTime;
+            bool defferedDropTimerFromStackThisFrame = false;
             if (timer->math == TickMath.Subtract) dt = -dt;
 
             for (int i = 0; i < timer->events.currentSize; i++)
             {
                 if (!timer->events.GetWrapper(i).Active) continue;
-                
                 ref var timerEvent = ref timer->events[i]; 
                 timerEvent.info.time += dt;
                 
                 if(!timerEvent.IsTriggered) continue;
-                if (!timerEvent.OnFinishedRemoveSelf.ShouldRun(in timerEvent.finishedData)) continue;
-                if (timerEvent.keepTicking == false) timer->events.GetWrapper(i).Active.Set(false);
-                timerEvent.OnFinishedRemoveSelf.Run(ref timerEvent.finishedData);
+
+                if (timerEvent.type == TimerEventType.OneShotTimerKeepsTicking)
+                    timer->events.GetWrapper(i).Active.Set(false);
+                else if (timerEvent.type == TimerEventType.StopTimer)
+                    defferedDropTimerFromStackThisFrame = true;
+                else if (timerEvent.type == TimerEventType.Repeating)
+                    timerEvent.info.time = 0;
+                
                 timerEvent.OnFinishedOperation.Run(ref timerEvent.finishedData);
             }
+            
+            if(defferedDropTimerFromStackThisFrame) TimerStack.StopTimer(timer->removalIndex);
         }
         
     }

@@ -31,16 +31,19 @@ namespace ProSM
     
     public static unsafe class ProSMxProTimersIntegrationLogic
     {
-        
-        public static LogicOperation<IntPtr> RemoveSelfFromTimerStackOperation = new (&RemoveSelfFromTimerStackRun, &AlwaysRuns);
-        static void RemoveSelfFromTimerStackRun(IntPtr* data)
-        {
-            ref Transition transition = ref IntPtrPtrTo<Transition>.GetRef(data);
-            transition.durationMet.Set(true);
-            TimerStack.StopTimer(transition.timerStackRemovalIndex);
-        }
-        static bool AlwaysRuns(IntPtr* data) => true;
-
+        // public static LogicOperation<IntPtr> RemoveSelfFromTimerStackOperation = new (&RemoveSelfFromTimerStackRun, &AlwaysRuns);
+        // static void RemoveSelfFromTimerStackRun(IntPtr* data)
+        // {
+        //     ref Transition transition = ref IntPtrPtrTo<Transition>.GetRef(data);
+        //     transition.durationMet.Set(true);
+        //     TimerStack.StopTimer(transition.timerStackRemovalIndex);
+        // }
+        // static bool AlwaysRuns(IntPtr* data) => true;
+        //
+        // static ProSMxProTimersIntegrationLogic()
+        // {
+        //     ProTimerLogics.RemoveSelfFromTimerStackOperation = RemoveSelfFromTimerStackOperation;
+        // }
     }
     
     public static partial class ProSMLogic
@@ -79,13 +82,13 @@ namespace ProSM
                  
                  ref var storedTransition = ref fsm.layers[layerIndex].states[fromIndex].transitions.Get(transitionIndex);
                  var events = new Data<TimerEvent>(1, Allocator.Temp);
+
                  var removeSelfFromStackEvent = TimerEvent.WithData(
                      new TimerPredicateInfo(0, duration),
                      ref ProTimersPredicates.IsGreaterThanOrEqualTo,
-                     ref ProSMxProTimersIntegrationLogic.RemoveSelfFromTimerStackOperation,
-                     ref Transitioner<TData>.TransitionOperation,
-                     false,
-                     (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref storedTransition)
+                     ref Transitioner<TData>.TransitionOperation, 
+                     (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref storedTransition),
+                     TimerEventType.OneShotTimerKeepsTicking
                  );
                  
                  events.Allocate(ref removeSelfFromStackEvent);
