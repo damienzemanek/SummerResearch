@@ -11,7 +11,7 @@ using Unity.Collections;
 
 namespace ProSM
 {
-
+    
     public static unsafe class Transitioner<TData> where TData : unmanaged
     {
         public static LogicOperation<IntPtr> TransitionOperation = new (&Transition, &AlwaysRuns);
@@ -84,7 +84,7 @@ namespace ProSM
                  var events = new Data<TimerEvent, NoMtd>(1, Allocator.Temp);
                  var removeSelfFromStackEvent = TimerEvent.WithData(
                      new TimerPredicateInfo(0, duration),
-                     ProTimersPredicates.IsGreaterThanOrEqualTo(),
+                     ref ProTimersPredicates.IsGreaterThanOrEqualTo,
                      ref ProSMxProTimersIntegrationLogic.RemoveSelfFromTimerStackOperation,
                      ref Transitioner<TData>.TransitionOperation,
                      false,
