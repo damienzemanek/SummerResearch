@@ -57,7 +57,7 @@ public class ProTimerTestSuite
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 5.0f }, 
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -75,7 +75,6 @@ public class ProTimerTestSuite
         Assert.IsTrue(events.Active);
         Assert.IsTrue(timer.events.Active);
         Assert.IsTrue(Mathf.Approximately(timer.events[0].info.triggerTime, 5.0f));
-        Assert.IsTrue(timer.events[0].predicate.IsCreated);
     
         // 4. Manual Cleanup
         events.Dispose();
@@ -114,7 +113,7 @@ public class ProTimerTestSuite
             
             var timerEvent = TimerEvent.NoData(
                 new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, 
-                ProTimersPredicates.IsGreaterThanOrEqualTo(),
+                ref ProTimersPredicates.IsGreaterThanOrEqualTo,
                 ref SomeTriggerLogic.TriggeredOperation,
                 ref TimerStackLogics.NoOp,
                 false
@@ -165,7 +164,7 @@ public class ProTimerTestSuite
 
         var eventA = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f }, 
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -173,7 +172,7 @@ public class ProTimerTestSuite
         
         var eventB = TimerEvent.NoData(   
             new TimerPredicateInfo { time = 0, triggerTime = 2.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -205,7 +204,7 @@ public class ProTimerTestSuite
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 5.0f, triggerTime = 0.0f },
-            ProTimersPredicates.IsLessThanOrEqualTo(),
+            ref ProTimersPredicates.IsLessThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -232,7 +231,7 @@ public class ProTimerTestSuite
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -264,7 +263,7 @@ public class ProTimerTestSuite
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 0.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -288,7 +287,7 @@ public class ProTimerTestSuite
         
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -315,7 +314,7 @@ public class ProTimerTestSuite
             
             var timerEvent = TimerEvent.NoData(
                 new TimerPredicateInfo { time = 0, triggerTime = 0.1f },
-                ProTimersPredicates.IsGreaterThanOrEqualTo(),
+                ref ProTimersPredicates.IsGreaterThanOrEqualTo,
                 ref SomeTriggerLogic.TriggeredOperation,
                 ref TimerStackLogics.NoOp,
                 false
@@ -334,7 +333,7 @@ public class ProTimerTestSuite
         var events1 = new Data<TimerEvent>(1, Allocator.Persistent);
         var timerEvent1 = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -346,7 +345,7 @@ public class ProTimerTestSuite
         var events2 = new Data<TimerEvent>(1, Allocator.Persistent);
         var timerEvent2 = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 2.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -389,7 +388,7 @@ public class ProTimerTestSuite
         // One-shot
         var oneShot = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false
@@ -398,7 +397,7 @@ public class ProTimerTestSuite
         // Continuous
         var continuous = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             true
@@ -429,7 +428,7 @@ public class ProTimerTestSuite
         
         var timerEvent = TimerEvent.WithData(
             new TimerPredicateInfo { time = 0, triggerTime = 0.5f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.MutateDataOperation,
             ref TimerStackLogics.NoOp,
             false,
@@ -456,7 +455,7 @@ public class ProTimerTestSuite
         var events = new Data<TimerEvent>(1, Allocator.Persistent);
         var timerEvent = TimerEvent.NoData(
             new TimerPredicateInfo { time = 0, triggerTime = 1.0f },
-            ProTimersPredicates.IsGreaterThanOrEqualTo(),
+            ref ProTimersPredicates.IsGreaterThanOrEqualTo,
             ref SomeTriggerLogic.TriggeredOperation,
             ref TimerStackLogics.NoOp,
             false

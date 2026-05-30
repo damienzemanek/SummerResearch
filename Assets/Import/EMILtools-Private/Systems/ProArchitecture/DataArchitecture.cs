@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ProArchitecture.Logic;
+using ProArchitecture.Predicates;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -51,6 +52,18 @@ namespace ProArchitecture.Data
         public static implicit operator bool(ByteBool b) => b.active;
         public static implicit operator ByteBool(bool b) => new ByteBool { value = (byte)(b ? 1 : 0) };
         public ByteBool(bool _value) => value = (byte)(_value ? 1 : 0);
+    }
+
+    public unsafe struct RefToStatic<T> where T : unmanaged
+    {
+        T* ptr;
+        public ref T Ref => ref *ptr;
+        public RefToStatic(ref T value) => ptr = (T*)Unsafe.AsPointer(ref value);
+    }
+
+    public static class PredicateExtensions
+    {
+        public static bool Evaluate<T>(this ref RefToStatic<Predicate> pred, ref T data) where T : unmanaged => pred.Ref.Evaluate(ref data);
     }
 
     

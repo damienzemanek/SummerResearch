@@ -16,7 +16,6 @@ namespace ProArchitecture.Predicates
         // 1st: void* is the delegate
         // 2nd: bool is the result
         internal delegate*<void*, bool> evaluate;
-        public bool IsCreated => evaluate != null;
         public Predicate(delegate*<void*, bool> _evaluate) => evaluate = _evaluate;
     }
 

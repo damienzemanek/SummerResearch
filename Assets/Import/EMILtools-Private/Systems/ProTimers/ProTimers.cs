@@ -27,31 +27,39 @@ namespace ProTimers
     
     public static unsafe class ProTimersPredicates
     {
-        public static Predicate IsLessThan() => new Predicate(&isLessThan);
+        public static Predicate IsLessThan;
         static bool isLessThan(void* ptr) {
             var info = (TimerPredicateInfo*)ptr;
             return info->time < info->triggerTime;
         }
-        
-        public static Predicate IsGreaterThan() => new Predicate(&isGreaterThan);
+
+        public static Predicate IsGreaterThan;
         static bool isGreaterThan(void* ptr)
         {
             var info = (TimerPredicateInfo*)ptr;
             return info->time > info->triggerTime;
         }
-        
-        public static Predicate IsGreaterThanOrEqualTo() => new Predicate(&isGreaterThanOrEqualTo);
+
+        public static Predicate IsGreaterThanOrEqualTo;
         static bool isGreaterThanOrEqualTo(void* ptr)
         {
             var info = (TimerPredicateInfo*)ptr;
             return info->time >= info->triggerTime;
         }
-        
-        public static Predicate IsLessThanOrEqualTo() => new Predicate(&isLessThanOrEqualTo);
+
+        public static Predicate IsLessThanOrEqualTo;
         static bool isLessThanOrEqualTo(void* ptr)
         {
             var info = (TimerPredicateInfo*)ptr;
             return info->time <= info->triggerTime;
+        }
+
+        static ProTimersPredicates()
+        {
+            IsLessThan = new Predicate(&isLessThan);
+            IsGreaterThan = new Predicate(&isGreaterThan);
+            IsGreaterThanOrEqualTo = new Predicate(&isGreaterThanOrEqualTo);
+            IsLessThanOrEqualTo = new Predicate(&isLessThanOrEqualTo);
         }
         
     }
@@ -79,7 +87,7 @@ namespace ProTimers
         public ByteBool keepTicking;
 
         public TimerPredicateInfo info;
-        public Predicate predicate;
+        public RefToStatic<Predicate> predicate;
         public LogicOperation<IntPtr>* removeSelfOperation; 
         public ref LogicOperation<IntPtr> OnFinishedRemoveSelf => ref *removeSelfOperation;
         
@@ -87,13 +95,13 @@ namespace ProTimers
         public ref LogicOperation<IntPtr> OnFinishedOperation => ref *onFinishedOperation;   
         public IntPtr finishedData;
 
-        public static TimerEvent NoData(TimerPredicateInfo _info, Predicate _predicate,
+        public static TimerEvent NoData(TimerPredicateInfo _info, ref Predicate _predicate,
             ref LogicOperation<IntPtr> _removeSelfFromTimerStack, ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered)
         {
             return new TimerEvent()
             {
                 info = _info,
-                predicate = _predicate,
+                predicate = new RefToStatic<Predicate>(ref _predicate),
                 removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _removeSelfFromTimerStack),
                 onFinishedOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
                 keepTicking = new ByteBool(keepTickingAfterEventTriggered),
@@ -101,13 +109,13 @@ namespace ProTimers
             };
         }
 
-        public static TimerEvent WithData(TimerPredicateInfo _info, Predicate _predicate,
+        public static TimerEvent WithData(TimerPredicateInfo _info, ref Predicate _predicate,
             ref LogicOperation<IntPtr> _removeSelfFromTimerStack, ref LogicOperation<IntPtr> _onFinished, bool keepTickingAfterEventTriggered, IntPtr dataPtr)
         {
             return new TimerEvent()
             {
                 info = _info,
-                predicate = _predicate,
+                predicate = new RefToStatic<Predicate>(ref _predicate),
                 removeSelfOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _removeSelfFromTimerStack),
                 onFinishedOperation = (LogicOperation<IntPtr>*)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref _onFinished),
                 keepTicking = new ByteBool(keepTickingAfterEventTriggered),
