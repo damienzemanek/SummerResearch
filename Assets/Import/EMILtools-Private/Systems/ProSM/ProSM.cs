@@ -3,41 +3,43 @@ using UnityEngine;
 
 namespace ProSM
 {
-
-    
-    
-    // To Implement: Make Predicate static on the static implementation level
     
 
     /// <summary>
-    /// Instance Defined Procedural State Machine Handle
-    /// Layer enums to be declared by the user
+    /// Instance Defined Procedural State Machine Handle.
+    /// Manages multi-layered, parallel state logic using unmanaged data structures.
+    ///
+    /// Architecture & Design:
+    /// - Procedural-First: Logic is separated from data; state transitions are handled via systems.
+    /// - High Performance: Blittable and unmanaged compatible; uses raw pointers for speed.
+    /// - Multi-Layered: Supports parallel state machines running on the same data.
+    /// - Deterministic: Transitions follow a strict evaluation order.
     ///
     /// Features/Configuration:
-    /// - Any Transitions are evaluated first, followed by direct transitions
-    /// - Self Transitions are explicitly ignored (skipped)
-    /// - Disposal is idempotent and safe to call multiple times
-    /// - Blittable and unmanaged compatible for high performance
-    /// - Multi-layered support for parallel state logic
+    /// - Transition Priority: AnyTransitions are evaluated first, followed by DirectTransitions.
+    /// - Self-Transitions: Explicitly ignored; transitioning to the current state does nothing.
+    /// - Timed Transitions: Integrated with ProTimers for duration-based logic.
+    /// - Idempotent Disposal: Safe to call Dispose multiple times; handles nested cleanup.
+    ///
+    /// Memory Safety & Edge Cases:
+    /// - [CRITICAL] Struct Mobility: Capturing 'ref fsm' (e.g., in AddDirectTimedTransition) creates a raw pointer. 
+    ///   Moving the FSM struct (passing by value, list resize) will dangle this pointer.
+    /// - [CRITICAL] State Interruption: Manual transitions do NOT cancel pending timed transitions. 
+    ///   The FSM may jump unexpectedly if a stale timer triggers after a manual state change.
+    /// - TData Constraint: Must be an unmanaged/blittable struct.
     ///
     /// Usage:
-    /// - Initialize() with the number of layers
-    /// - InitLayer() for each layer with the default state
-    /// - Add_AnyTransition() for any transitions
-    /// - Add_DirectTransition() for direct transitions
-    /// - Entry() to start the FSM
-    /// - TickUpdate(), TickFixedUpdate(), TickLateUpdate() to call tick logic
-    /// - TryPollTransitions() to check for transitions and update the FSM
-    /// - Dispose() to clean up resources
+    /// 1. Initialize(layerCount) to allocate internal buffers.
+    /// 2. InitLayer<TEnum, TData>(index) for each layer with the default state.
+    /// 3. Add_AnyTransition / Add_DirectTransition to define the graph.
+    /// 4. Entry(ref TData) to trigger initial state entry logic.
+    /// 5. TickUpdate / TryPollTransitions within the game loop.
+    /// 6. Dispose() when the FSM is no longer needed.
     ///
-    /// Validation / Exception Handling:
-    /// - Throws ArgumentException if TData is not a blittable type
-    /// - Throws InvalidOperationException if Entry() is called without initialized layers
-    /// - Throws InvalidOperationException if an allocated layer was never set up via InitLayer()
-    /// - Throws InvalidOperationException if TryPollTransitions() is called before Entry() (Unity checks only)
-    /// - Throws ArgumentException if enum types do not match the layer's initialized type
-    /// - Throws ArgumentOutOfRangeException if state indices are invalid for the layer
-    /// - Throws InvalidOperationException if Initialize() is called on an already active FSM
+    /// Validation:
+    /// - Throws if TData is not unmanaged.
+    /// - Throws if Entry/Tick is called on uninitialized layers.
+    /// - Throws if enum types mismatch the layer's initialized type.
     /// </summary>
     /// <typeparam name="TData">Unmanaged data structure passed through all state logic</typeparam>
     public struct ProSM<TData> where TData : unmanaged

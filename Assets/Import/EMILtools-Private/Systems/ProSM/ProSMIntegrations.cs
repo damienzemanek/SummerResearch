@@ -77,6 +77,7 @@ namespace ProSM
             {
                  Predicate AlwaysTrue = new Predicate(&TrueCondition);
                  var tempTransition = new Transition((short)toIndex, ref AlwaysTrue, true);
+                 tempTransition.from = (short)fromIndex;
                  tempTransition.dataFetchLocationOnComplete = (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref dataFetchLocationOnComplete);
                  fsm.layers[layerIndex].states[fromIndex].transitions.Allocate(ref tempTransition, out int transitionIndex);
                  

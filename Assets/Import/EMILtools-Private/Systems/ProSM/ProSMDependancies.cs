@@ -37,6 +37,7 @@ namespace ProSM
 
     public unsafe struct Transition
     {
+        public short from;
         public short to;
         public Predicate condition;
         public ByteBool hasDurationCondition;
@@ -44,9 +45,10 @@ namespace ProSM
         public int layer;
         public IntPtr dataFetchLocationOnComplete;
         public IntPtr fsm;
-        // mabye in the future make this a logic that does not have to pass in the predicate, but creates it here
+
         public Transition(short _to, ref Predicate _condition, bool hasDuration)
         {
+            from = -1;
             to = _to;
             condition = _condition;
             hasDurationCondition = new ByteBool(hasDuration);

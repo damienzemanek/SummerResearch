@@ -65,8 +65,35 @@ namespace ProTimers
     }
 
     /// <summary>
-    /// DataEvents live on the ProTimer, which lives in the static TimerStack
-    /// Ensure that you do not allocated Persistent for your temporary Data<TimerEvent> pass through
+    /// Static Procedural Timer System.
+    /// Manages a global stack of timers using high-performance batch processing.
+    ///
+    /// Architecture & Design:
+    /// - Data-Oriented: Timers live in a flat, contiguous stack (TimerStack) for cache efficiency.
+    /// - Static Execution: Logic is decoupled from game objects; ticked via a central system.
+    /// - Pointer-Based: Uses raw pointers for event execution to avoid overhead.
+    ///
+    /// Features/Configuration:
+    /// - TickMath: Supports both incremental (Add) and decremental (Subtract) timing logic.
+    /// - Event Types: 
+    ///     - OneShotTimerKeepsTicking: Disables the event but keeps the parent timer active.
+    ///     - Repeating: Resets elapsed time to zero upon triggering.
+    ///     - StopTimer: Deactivates the entire timer on the stack after execution.
+    /// - Predicate Integration: Flexible trigger conditions (Less than, Greater than, etc.).
+    ///
+    /// Memory Safety & Edge Cases:
+    /// - [CRITICAL] Stack Reallocation: Adding timers inside a callback can trigger a stack resize. 
+    ///   This reallocates the underlying array, potentially dangling pointers used in the current batch.
+    /// - [CRITICAL] Data Lifetime: TimerEvents holding pointers to data (WithData) must ensure 
+    ///   the target data outlives the timer. Storing pointers to stack-allocated variables is dangerous.
+    /// - Capacity Management: The stack grows automatically but does not currently shrink; 
+    ///   inactive timers are skipped but still iterated until Reset() is called.
+    ///
+    /// Usage:
+    /// 1. Create a ProTimer with desired TickMath and a Data list of TimerEvents.
+    /// 2. Use TimerStack.AddTimer(ref timer) to register it.
+    /// 3. Call TimerStack.StartTimer(id) to begin ticking.
+    /// 4. Tick the system via TimerStack.TickActives() in a central Update loop.
     /// </summary>
     public struct ProTimer
     {

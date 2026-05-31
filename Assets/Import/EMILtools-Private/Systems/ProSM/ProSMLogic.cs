@@ -175,6 +175,11 @@ namespace ProSM
                 ref var transition = ref layerdata.anyTransitions.Get(i);
                 if(!transition.hasDurationCondition) continue;
                 if(layerdata.currentState == transition.to) continue;
+
+                // Stale Transition Check: Ensure the state we are transitioning FROM matches the current state
+                // Note: For AnyTransitions, transition.from is -1, so we skip this check
+                if (transition.from != -1 && layerdata.currentState != transition.from) continue;
+
                 nextState = transition.to;
                 return true;
             }
@@ -187,6 +192,10 @@ namespace ProSM
                 if(!transition.hasDurationCondition) continue;
                 Debug.Log("PASS B");
                 if(layerdata.currentState == transition.to) continue;
+
+                // Stale Transition Check: Ensure the state we are transitioning FROM matches the current state
+                if (layerdata.currentState != transition.from) continue;
+
                 nextState = transition.to;
                 Debug.Log("PASS C");
                 return true;
