@@ -17,25 +17,18 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
     ProSM<BtnData> fsm;
     Logics<BtnData> enterLogics, exitLogics, clickLogics;
     NativeList<LogicOperation<BtnData>> enterLogicBuffer, exitLogicBuffer, clickLogicBuffer;
+    BtnData enterStateData, clickStateData, exitStateData;
     
-    BtnData enterStateData;
-    BtnData clickStateData;
-    BtnData exitStateData;
     public BtnData.SharedBtnState sharedBtnState;
-
-    Predicate isHoveredPredicate;
-    Predicate isNotHoveredPredicate;
-    Predicate isClickedPredicate;
-
-    bool ShowEnter => (buttonBtnEvents & Enter) != 0;
-    bool ShowExit => (buttonBtnEvents & Exit) != 0;
-    bool ShowClick => (buttonBtnEvents & Click) != 0;
+    bool enter => (buttonBtnEvents & Enter) != 0;
+    bool exit => (buttonBtnEvents & Exit) != 0;
+    bool click => (buttonBtnEvents & Click) != 0;
     
     // Pubbis
-    [FormerlySerializedAs("ButtonEvents")] public BtnEvent buttonBtnEvents;
-    [FormerlySerializedAs("enter")] [ShowIf(nameof(ShowEnter))] public BtnReferences enterRefs;
-    [FormerlySerializedAs("exit")] [ShowIf(nameof(ShowExit))] public BtnReferences exitRefs;
-    [FormerlySerializedAs("click")] [ShowIf(nameof(ShowClick))] public BtnReferences clickRefs;
+    public BtnEvent buttonBtnEvents;
+    [ShowIf(nameof(enter))] public BtnReferences enterRefs;
+    [ShowIf(nameof(exit))] public BtnReferences exitRefs;
+    [ShowIf(nameof(click))] public BtnReferences clickRefs;
     
 
     void Awake()
@@ -88,40 +81,36 @@ public class ButtonPlus : MonoBehaviour, IPointerEnterHandler, IPointerClickHand
             if (buttonBtnEvents.HasFlag(Click)) {
                 clickStateData.btnEventType = Click;
                 clickStateData.managedBtn = sharedBtnState.ManagedBtn; }
-            
-            isHoveredPredicate = ButtonPredicates.IsHovered();
-            isNotHoveredPredicate = ButtonPredicates.IsNotHovered();
-            isClickedPredicate = ButtonPredicates.IsClicked();
         }
 
 
         void EstablishTransitions()
         {
-            fsm.AddDirectTransition(0, BtnStates.Default, BtnStates.Hover, ref isHoveredPredicate);
-            fsm.AddDirectTransition(0, BtnStates.Hover, BtnStates.Default, ref isNotHoveredPredicate);
-            fsm.AddDirectTransition(0, BtnStates.Hover, BtnStates.Pressed, ref isClickedPredicate);
-            fsm.AddDirectTransition(0, BtnStates.Pressed, BtnStates.Default, ref isNotHoveredPredicate);
-            
-            //fsm.AddDirectTimedTransition(0, BtnStates.Pressed, BtnStates.Default, 0.5f);
-
+            fsm.AddDirectTransition(0, BtnStates.Default, BtnStates.Hover, ref ButtonPredicates.IsHovered);
+            fsm.AddDirectTransition(0, BtnStates.Hover, BtnStates.Default, ref ButtonPredicates.IsNotHovered);
+            fsm.AddDirectTransition(0, BtnStates.Hover, BtnStates.Pressed, ref ButtonPredicates.IsClicked);
+            fsm.AddDirectTransition(0, BtnStates.Pressed, BtnStates.Default, ref ButtonPredicates.IsNotHovered);
         }
     }
     
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (!enter) return;
         enterStateData.sharedBtnStateData.isHovered = 1;
         fsm.TryPollTransitions(ref enterStateData);
     }
     
-    public void OnPointerExit(PointerEventData eventData)    
+    public void OnPointerExit(PointerEventData eventData)
     {
+        if (!exit) return;
         exitStateData.sharedBtnStateData.isHovered = 0;
-        clickStateData.sharedBtnStateData.isClicked = 0;
+        if(click) clickStateData.sharedBtnStateData.isClicked = 0;
         fsm.TryPollTransitions(ref exitStateData);   
     }
-    public void OnPointerClick(PointerEventData eventData)          
-    {                                                      
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (!click) return;
         clickStateData.sharedBtnStateData.isClicked = 1;
         fsm.TryPollTransitions(ref clickStateData);  
         clickStateData.sharedBtnStateData.isClicked = 0;

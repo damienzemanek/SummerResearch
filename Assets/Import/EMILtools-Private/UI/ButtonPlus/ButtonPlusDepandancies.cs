@@ -98,25 +98,32 @@ public static class ButtonPlusDepandancies
     public static unsafe class ButtonPredicates
     {   
         // Little verbose, but oh well
-        public static Predicate IsHovered() => new(&isHovered);
+        public static Predicate IsHovered;
         static bool isHovered(void* ptr)
         {
             BtnData* data = (BtnData*)ptr;
             return data->sharedBtnStateData.IsHovered;
         }
-        
-        public static Predicate IsNotHovered() => new(&isNotHovered);
+
+        public static Predicate IsNotHovered;
         static bool isNotHovered(void* ptr)
         {
             BtnData* data = (BtnData*)ptr;
             return !data->sharedBtnStateData.IsHovered;
         }
-        
-        public static Predicate IsClicked() => new(&isClicked);
+
+        public static Predicate IsClicked;
         static bool isClicked(void* ptr)
         {
             BtnData* data = (BtnData*)ptr;
             return data->sharedBtnStateData.IsClicked;
+        }
+
+        static ButtonPredicates()
+        {
+            IsHovered = new(&isHovered);
+            IsNotHovered = new(&isNotHovered);
+            IsClicked = new(&isClicked);
         }
     }
     
