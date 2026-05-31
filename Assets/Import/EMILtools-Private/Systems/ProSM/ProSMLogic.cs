@@ -156,11 +156,6 @@ namespace ProSM
                 ref var transition = ref currentStateData.transitions.Get(i);
                 Debug.Log("[DIRECT] Eval: " + transition.condition.Evaluate(ref data) + " Time: " + layerdata.timeInState + " Dur: " + transition.hasDurationCondition);
                 if (!transition.condition.Evaluate(ref data)) continue;
-                // if (transition.hasDurationCondition) continue;
-                // if (transition.flaggedForInactive)
-                // {
-                //     
-                // }
                 if(layerdata.currentState == transition.to) continue;
                 nextState = transition.to;
                 return true;
@@ -179,7 +174,6 @@ namespace ProSM
             {
                 ref var transition = ref layerdata.anyTransitions.Get(i);
                 if(!transition.hasDurationCondition) continue;
-                if(!transition.durationMet) continue;
                 if(layerdata.currentState == transition.to) continue;
                 nextState = transition.to;
                 return true;
@@ -189,10 +183,8 @@ namespace ProSM
             for(int i = 0; i < currentStateData.transitions.currentSize; i++)        
             {
                 ref var transition = ref currentStateData.transitions.Get(i);
-                Debug.Log($"Transition: {i} hasDurationCondition? {transition.hasDurationCondition} durationMet? {transition.durationMet}");
+                Debug.Log($"Transition: {i} hasDurationCondition? {transition.hasDurationCondition}");
                 if(!transition.hasDurationCondition) continue;
-                Debug.Log("PASS A");
-                if(!transition.durationMet) continue;
                 Debug.Log("PASS B");
                 if(layerdata.currentState == transition.to) continue;
                 nextState = transition.to;

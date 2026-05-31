@@ -88,8 +88,7 @@ public class ProTimerTestSuite
         // 3. Assert
         Assert.AreEqual(0, timer.events[0].info.time);
         Assert.AreEqual(1, timer.events.currentSize);
-        Assert.IsFalse(events.Active, "Since Timer is not active yet, the events should not be active.");
-        Assert.IsFalse(timer.events.Active);
+        Assert.IsFalse(timer.events.Active.active);
         Assert.IsTrue(Mathf.Approximately(timer.events[0].info.triggerTime, 5.0f));
         Assert.AreEqual(TimerEventType.OneShotTimerKeepsTicking, timer.events[0].type);
     

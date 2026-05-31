@@ -45,12 +45,10 @@ public class ProSMIntegrationTestSuite : MonoBehaviour
         fsm.AddDirectTimedTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, ref data, 1);
         TimerStack.TickActivesDebug(0.5f);
 
-        Assert.IsFalse(fsm.layers[0].states[0].transitions[0].durationMet.active);
         Assert.IsTrue(TimerStack.timers.GetWrapper(0).Active.active);
         
         TimerStack.TickActivesDebug(0.6f);
         
-        Assert.IsTrue(fsm.layers[0].states[0].transitions[0].durationMet.active);
         Assert.IsFalse(TimerStack.timers.GetWrapper(0).Active.active);
         
         fsm.Dispose();

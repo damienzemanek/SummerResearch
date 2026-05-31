@@ -40,12 +40,7 @@ namespace ProSM
         public short to;
         public Predicate condition;
         public ByteBool hasDurationCondition;
-        public ByteBool durationMet;
-        
-        // I should make a metadata storage that lives on TimerStack that can access this
-        public int timerStackRemovalIndex;
-        
-        // Same with this one, but for LayerData
+
         public int layer;
         public IntPtr dataFetchLocationOnComplete;
         public IntPtr fsm;
@@ -55,8 +50,6 @@ namespace ProSM
             to = _to;
             condition = _condition;
             hasDurationCondition = new ByteBool(hasDuration);
-            durationMet = new ByteBool(false);
-            timerStackRemovalIndex = -1;
             layer = -1;
             fsm = IntPtr.Zero;
             dataFetchLocationOnComplete = IntPtr.Zero;

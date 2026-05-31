@@ -88,13 +88,12 @@ namespace ProSM
                      ref ProTimersPredicates.IsGreaterThanOrEqualTo,
                      ref Transitioner<TData>.TransitionOperation, 
                      (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref storedTransition),
-                     TimerEventType.OneShotTimerKeepsTicking
+                     TimerEventType.StopTimer
                  );
                  
                  events.Allocate(ref removeSelfFromStackEvent);
                  var timer = new ProTimer(TickMath.Add, ref events);
                  int id = TimerStack.AddTimer(ref timer);
-                 storedTransition.timerStackRemovalIndex = id;
                 
                  storedTransition.layer = layerIndex;
                  storedTransition.fsm = (IntPtr)Unity.Collections.LowLevel.Unsafe.UnsafeUtility.AddressOf(ref fsm);

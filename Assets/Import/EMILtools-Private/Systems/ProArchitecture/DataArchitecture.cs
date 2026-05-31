@@ -121,7 +121,7 @@ namespace ProArchitecture.Data
             {
                 Active = new ByteBool();
                 Active.Set(true);
-                this.data = getData;
+                data = getData;
             }
 
             /// <summary>
@@ -151,7 +151,7 @@ namespace ProArchitecture.Data
             nextIndex = 0;
             data = new UnsafeList<DataWrapper>(capacity, allocator);
             Active = new ByteBool();
-            Active.Set(false);
+            Active.Set(true);
         }
 
         public Data(Data<T> tempAllocatedEvents)

@@ -12,11 +12,16 @@ public class ProSMTestSuite : MonoBehaviour
     public static unsafe class ExamplePredicates
     {   
         // Little verbose, but oh well
-        public static Predicate IsGreaterThanOne() => new Predicate(&isGreaterThanOne);
+        public static Predicate IsGreaterThanOne;
         static bool isGreaterThanOne(void* ptr)
         {
             ExampleData* data = (ExampleData*)ptr;
             return data->x > 1;
+        }
+
+        static ExamplePredicates()
+        {
+            IsGreaterThanOne = new Predicate(&isGreaterThanOne);
         }
     }
     
@@ -28,21 +33,20 @@ public class ProSMTestSuite : MonoBehaviour
     {
         ProSM<ExampleData> fsm = new ProSM<ExampleData>();
         var exampleData = new ExampleData() { x = 2 };
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
 
         fsm.Initialize(2);
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         fsm.InitLayer<TestLayerTwo, ExampleData>(1);
 
         Assert.AreEqual(2, exampleData.x);
-        Assert.IsTrue(fsm.layers.Active);
+        Assert.IsTrue(fsm.layers.Active.active);
         Assert.IsTrue(fsm.layers[0].IsInitialized);
         Assert.IsTrue(fsm.layers[1].IsInitialized);
         Assert.AreEqual(3, fsm.layers[0].states.currentSize);
         Assert.AreEqual(3, fsm.layers[1].states.currentSize);
         
-        Assert.IsTrue(fsm.layers[0].states[0].transitions.Active);
-        Assert.IsTrue(fsm.layers[1].states[0].transitions.Active);
+        Assert.IsTrue(fsm.layers[0].states[0].transitions.Active.active);
+        Assert.IsTrue(fsm.layers[1].states[0].transitions.Active.active);
         
         fsm.Dispose();
     }
@@ -56,10 +60,9 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         fsm.InitLayer<TestLayerTwo, ExampleData>(1);
         var exampleData = new ExampleData() { x = 2 };
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
-        fsm.AddAnyTransition(0, TestLayerOne.L1S1, ref TestPredicate);
+        fsm.AddAnyTransition(0, TestLayerOne.L1S1, ref ExamplePredicates.IsGreaterThanOne);
         
-        Assert.IsTrue(fsm.layers[0].anyTransitions.Active);
+        Assert.IsTrue(fsm.layers[0].anyTransitions.Active.active);
         Assert.AreEqual(1, fsm.layers[0].anyTransitions.currentSize);
 
         fsm.Dispose();
@@ -74,10 +77,9 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         fsm.InitLayer<TestLayerTwo, ExampleData>(1);
         var exampleData = new ExampleData() { x = 2 };
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
-        fsm.AddDirectTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S2, ref TestPredicate);
+        fsm.AddDirectTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         
-        Assert.IsTrue(fsm.layers[0].states[0].transitions.Active);
+        Assert.IsTrue(fsm.layers[0].states[0].transitions.Active.active);
         Assert.AreEqual(1, fsm.layers[0].states[0].transitions.currentSize);
 
         fsm.Dispose();
@@ -92,7 +94,6 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.InitLayer(0, TestLayerOne.L1S2);
         fsm.InitLayer(1, TestLayerTwo.L2S3);
         var exampleData = new ExampleData() { x = 2 };
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
         
         fsm.Entry(ref exampleData);
 
@@ -114,8 +115,7 @@ public class ProSMTestSuite : MonoBehaviour
         var exampleData2 = new ExampleData() { x = 2 };
         fsm.Entry(ref exampleData1);
 
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
-        fsm.AddAnyTransition(0, TestLayerOne.L1S2, ref TestPredicate);
+        fsm.AddAnyTransition(0, TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         
         var resultFalse = fsm.TryPollTransitionsOnLayer(ref fsm.layers[0], ref exampleData1, out int _);
         var resultTrue = fsm.TryPollTransitionsOnLayer(ref fsm.layers[0], ref exampleData2, out int _);
@@ -145,8 +145,7 @@ public class ProSMTestSuite : MonoBehaviour
         var exampleData2 = new ExampleData() { x = 2 };
         fsm.Entry(ref exampleData1);
 
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
-        fsm.AddDirectTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, ref TestPredicate);
+        fsm.AddDirectTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         
         var resultFalse = fsm.TryPollTransitionsOnLayer(ref fsm.layers[0], ref exampleData1, out int _);
         var resultTrue = fsm.TryPollTransitionsOnLayer(ref fsm.layers[0], ref exampleData2, out int _);
@@ -172,8 +171,7 @@ public class ProSMTestSuite : MonoBehaviour
         var exampleData2 = new ExampleData() { x = 2 };
         fsm.Entry(ref exampleData1);
 
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
-        fsm.AddAnyTransition(0, TestLayerOne.L1S2, ref TestPredicate);
+        fsm.AddAnyTransition(0, TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         
         var resultFalse = fsm.TryPollTransitionsOnLayer(ref fsm.layers[0], ref exampleData1, out int nextState_doesNOTtransition);
         var resultTrue = fsm.TryPollTransitionsOnLayer(ref fsm.layers[0], ref exampleData2, out int nextState2_doesTransition);
@@ -200,8 +198,7 @@ public class ProSMTestSuite : MonoBehaviour
         var exampleData2 = new ExampleData() { x = 2 };
         fsm.Entry(ref exampleData1);
 
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
-        fsm.AddDirectTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, ref TestPredicate);
+        fsm.AddDirectTransition(0, TestLayerOne.L1S1,TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         
         var resultFalse = fsm.TryPollTransitionsOnLayer(ref fsm.layers[0], ref exampleData1, out int nextState_doesNOTtransition);
         var resultTrue = fsm.TryPollTransitionsOnLayer(ref fsm.layers[0], ref exampleData2, out int nextState2_doesTransition);
@@ -228,7 +225,6 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         
         var exampleData = new ExampleData() { x = 2 };
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
         fsm.Entry(ref exampleData);
 
         Test9Logic.Reset();
@@ -236,7 +232,7 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.layers[0].states[0].OnExitState = Test9Logic.ExitLogics;
         fsm.layers[0].states[1].OnEnterState = Test9Logic.EnterLogics;
         
-        fsm.AddAnyTransition(0, TestLayerOne.L1S2, ref TestPredicate);
+        fsm.AddAnyTransition(0, TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         
         var resultTrue = fsm.TryPollTransitionsOnLayer(ref fsm.layers[0], ref exampleData, out int nextState);
 
@@ -360,9 +356,8 @@ public class ProSMTestSuite : MonoBehaviour
         var exampleData2 = new ExampleData() { x = 2 };
         fsm.Entry(ref exampleData1);
         
-        var TestPredicate = ExamplePredicates.IsGreaterThanOne();
-        fsm.AddAnyTransition(0, TestLayerOne.L1S2, ref TestPredicate);
-        fsm.AddAnyTransition(1, TestLayerTwo.L2S2, ref TestPredicate);
+        fsm.AddAnyTransition(0, TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
+        fsm.AddAnyTransition(1, TestLayerTwo.L2S2, ref ExamplePredicates.IsGreaterThanOne);
 
         
         // Should not Transition
@@ -392,12 +387,11 @@ public class ProSMTestSuite : MonoBehaviour
         var exampleData = new ExampleData() { x = 2 };
 
         fsm.Entry(ref exampleData);
-        var truePredicate = ExamplePredicates.IsGreaterThanOne(); // Always true for x=2
         
         // Add direct transition to S2
-        fsm.AddDirectTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S2, ref truePredicate);
+        fsm.AddDirectTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         // Add any transition to S3
-        fsm.AddAnyTransition(0, TestLayerOne.L1S3, ref truePredicate);
+        fsm.AddAnyTransition(0, TestLayerOne.L1S3, ref ExamplePredicates.IsGreaterThanOne);
 
         fsm.TryPollTransitions(ref exampleData);
 
@@ -434,14 +428,13 @@ public class ProSMTestSuite : MonoBehaviour
         var data = new ExampleData() { x = 10 };
         fsm.Entry(ref data);
 
-        var predicate = ExamplePredicates.IsGreaterThanOne();
 
         // S1 Exit: x += 1 (11)
         // S2 Enter: x *= 2 (22)
         fsm.layers[0].states[(int)TestLayerOne.L1S1].OnExitState = PipelineLogic.AddOneLogics;
         fsm.layers[0].states[(int)TestLayerOne.L1S2].OnEnterState = PipelineLogic.DoubleLogics;
 
-        fsm.AddDirectTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S2, ref predicate);
+        fsm.AddDirectTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         fsm.TryPollTransitions(ref data);
 
         Assert.AreEqual(22f, data.x, "Data should be modified by Exit then Enter in sequence");
@@ -477,16 +470,14 @@ public class ProSMTestSuite : MonoBehaviour
         
         var data = new ExampleData() { x = 10 };
         fsm.Entry(ref data);
-
-        var predicate = ExamplePredicates.IsGreaterThanOne();
-
+        
         // Setup counters in logic
         TransitionCounter.Reset();
         fsm.layers[0].states[(int)TestLayerOne.L1S1].OnExitState = TransitionCounter.ExitLogics;
         fsm.layers[0].states[(int)TestLayerOne.L1S1].OnEnterState = TransitionCounter.EnterLogics;
 
         // Add transition S1 -> S1 (Self)
-        fsm.AddDirectTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S1, ref predicate);
+        fsm.AddDirectTransition(0, TestLayerOne.L1S1, TestLayerOne.L1S1, ref ExamplePredicates.IsGreaterThanOne);
         
         // Poll transitions
         fsm.TryPollTransitions(ref data);
@@ -508,12 +499,11 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.Initialize(LAYER_COUNT);
         
         var data = new ExampleData() { x = 2 };
-        var predicate = ExamplePredicates.IsGreaterThanOne();
 
         for (int i = 0; i < LAYER_COUNT; i++)
         {
             fsm.InitLayer<TestLayerOne, ExampleData>(i);
-            fsm.AddAnyTransition(i, TestLayerOne.L1S2, ref predicate);
+            fsm.AddAnyTransition(i, TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         }
 
         fsm.Entry(ref data);
@@ -540,15 +530,14 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         fsm.Entry(ref data);
 
-        var predicate = ExamplePredicates.IsGreaterThanOne();
 
         // Attempting to add a transition using TestLayerTwo on a layer initialized with TestLayerOne
         Assert.Throws<ArgumentException>(() => {
-            fsm.AddAnyTransition(0, TestLayerTwo.L2S1, ref predicate);
+            fsm.AddAnyTransition(0, TestLayerTwo.L2S1, ref ExamplePredicates.IsGreaterThanOne);
         }, "Should throw when adding Any transition with wrong enum type");
 
         Assert.Throws<ArgumentException>(() => {
-            fsm.AddDirectTransition(0, TestLayerTwo.L2S1, TestLayerTwo.L2S2, ref predicate);
+            fsm.AddDirectTransition(0, TestLayerTwo.L2S1, TestLayerTwo.L2S2, ref ExamplePredicates.IsGreaterThanOne);
         }, "Should throw when adding Direct transition with wrong enum type");
 
         fsm.Dispose();
@@ -577,7 +566,7 @@ public class ProSMTestSuite : MonoBehaviour
 
         Assert.Throws<InvalidOperationException>(() => {
             fsm.Initialize(1);
-        }, "Should throw if Initialize is called on an already active FSM");
+        }, "Should throw if Initialize is called on an already Active.active FSM");
 
         fsm.Dispose();
     }
@@ -634,7 +623,6 @@ public class ProSMTestSuite : MonoBehaviour
         fsm.Initialize(1);
         fsm.InitLayer<TestLayerOne, ExampleData>(0);
         
-        var predicate = ExamplePredicates.IsGreaterThanOne();
         
         // TestLayerOne has 3 states (0, 1, 2). Index 3 is invalid.
         // We cast an int to the Enum to simulate an invalid/out-of-range state
@@ -642,17 +630,17 @@ public class ProSMTestSuite : MonoBehaviour
 
         // Any Transition: Invalid 'to'
         Assert.Throws<ArgumentOutOfRangeException>(() => {
-            fsm.AddAnyTransition(0, invalidState, ref predicate);
+            fsm.AddAnyTransition(0, invalidState, ref ExamplePredicates.IsGreaterThanOne);
         }, "Should throw if 'to' state index is out of bounds");
 
         // Direct Transition: Invalid 'from'
         Assert.Throws<ArgumentOutOfRangeException>(() => {
-            fsm.AddDirectTransition(0, invalidState, TestLayerOne.L1S2, ref predicate);
+            fsm.AddDirectTransition(0, invalidState, TestLayerOne.L1S2, ref ExamplePredicates.IsGreaterThanOne);
         }, "Should throw if 'from' state index is out of bounds");
 
         // Direct Transition: Invalid 'to'
         Assert.Throws<ArgumentOutOfRangeException>(() => {
-            fsm.AddDirectTransition(0, TestLayerOne.L1S1, invalidState, ref predicate);
+            fsm.AddDirectTransition(0, TestLayerOne.L1S1, invalidState, ref ExamplePredicates.IsGreaterThanOne);
         }, "Should throw if 'to' state index is out of bounds in direct transition");
 
         fsm.Dispose();

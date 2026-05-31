@@ -79,6 +79,8 @@ namespace ProTimers
             math = _math;
             events = _events;
             removalIndex = -99;
+
+            events.Active.Set(false);
         }
     }
 
@@ -160,6 +162,7 @@ namespace ProTimers
         {
             timers.Allocate(ref tempTimer, out var id);
             timers[id].removalIndex = id; // has to be the indexed timer not the temp timer
+            timers[id].events.Active.Set(false);
 
             Debug.Log($"Timer Added: {id}");
             return id;
